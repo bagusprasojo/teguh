@@ -1,4 +1,4 @@
-from django.contrib.auth import views as auth_views
+﻿from django.contrib.auth import views as auth_views
 from django.urls import path
 
 from . import views
@@ -6,7 +6,7 @@ from . import views
 urlpatterns = [
     path("", views.home, name="home"),
     path("register/", views.register, name="register"),
-    path("login/", auth_views.LoginView.as_view(template_name="registration/login.html"), name="login"),
+    path("login/", views.UserLoginView.as_view(), name="login"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("dashboard/", views.dashboard, name="dashboard"),
     path("voucher/", views.redeem_voucher, name="redeem_voucher"),
@@ -31,4 +31,5 @@ urlpatterns = [
     path("manage/users/", views.admin_user_list, name="admin_user_list"),
     path("manage/attempts/", views.admin_attempt_list, name="admin_attempt_list"),
 ]
+
 

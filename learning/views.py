@@ -1,7 +1,8 @@
-from django.contrib import messages
+﻿from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
+from django.contrib.auth.views import LoginView
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -12,6 +13,16 @@ from .models import CBT, CBTAttempt, CBTAttemptAnswer, Choice, Question, UserAcc
 
 BRAND_NAME = "Koready"
 
+
+
+class UserLoginView(LoginView):
+    template_name = "registration/login.html"
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if not self.request.user.is_staff:
+            self.request.session["show_access_notice"] = True
+        return response
 
 def get_access(user):
     access, _ = UserAccess.objects.get_or_create(user=user)
@@ -40,6 +51,8 @@ def register(request):
         user.save()
         UserAccess.objects.create(user=user)
         login(request, user)
+        if not user.is_staff:
+            request.session["show_access_notice"] = True
         messages.success(request, "Akun berhasil dibuat. Masukkan voucher untuk membuka akses belajar.")
         return redirect("dashboard")
     return render(request, "registration/register.html", {"form": form, "brand_name": BRAND_NAME})
@@ -53,6 +66,7 @@ def dashboard(request):
         "video_count": Video.objects.filter(is_active=True).count(),
         "cbt_count": CBT.objects.filter(is_active=True).count(),
         "attempts": CBTAttempt.objects.filter(user=request.user)[:5],
+        "show_access_notice": request.session.pop("show_access_notice", False),
     })
 
 
@@ -240,4 +254,6 @@ def admin_user_list(request):
 def admin_attempt_list(request):
     attempts = CBTAttempt.objects.select_related("user", "cbt")
     return render(request, "learning/admin/attempt_list.html", {"attempts": attempts})
+
+
 

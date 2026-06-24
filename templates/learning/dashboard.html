@@ -1,5 +1,18 @@
-{% extends "base.html" %}
-{% block title %}Dashboard - Koready{% endblock %}
+﻿{% extends "base.html" %}
+{% block title %}Dashboard - Koready{% if show_access_notice and not user.is_staff %}
+<div x-data="{ open: true }" x-show="open" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center bg-zinc-950/70 px-4">
+  <div class="w-full max-w-lg rounded-lg bg-white p-6 shadow-2xl ring-1 ring-zinc-200" x-transition>
+    <p class="text-sm font-black uppercase tracking-wide text-rose-700">Peringatan Akses</p>
+    <h2 class="mt-2 text-2xl font-black text-zinc-950">Akses materi bersifat pribadi</h2>
+    <p class="mt-4 leading-7 text-zinc-700">
+      Akses atas semua materi pembelajaran ini khusus untuk user bersangkutan.
+      Haram hukumnya membagikan dalam bentuk apapun ke orang lain tanpa seizin pihak pemilik website.
+    </p>
+    <button type="button" class="btn-primary mt-6 w-full" @click="open = false">Saya Mengerti</button>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
 {% block content %}
 <section class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
   <div class="grid gap-6 lg:grid-cols-[1.4fr_.8fr]">
@@ -16,5 +29,19 @@
     {% for attempt in attempts %}<a href="{% url 'attempt_detail' attempt.pk %}" class="flex items-center justify-between border-b border-zinc-100 p-4 hover:bg-zinc-50"><span>{{ attempt.cbt.title }}</span><strong>{{ attempt.score }}</strong></a>{% empty %}<p class="p-4 text-zinc-500">Belum ada history.</p>{% endfor %}
   </div>
 </section>
+{% if show_access_notice and not user.is_staff %}
+<div x-data="{ open: true }" x-show="open" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center bg-zinc-950/70 px-4">
+  <div class="w-full max-w-lg rounded-lg bg-white p-6 shadow-2xl ring-1 ring-zinc-200" x-transition>
+    <p class="text-sm font-black uppercase tracking-wide text-rose-700">Peringatan Akses</p>
+    <h2 class="mt-2 text-2xl font-black text-zinc-950">Akses materi bersifat pribadi</h2>
+    <p class="mt-4 leading-7 text-zinc-700">
+      Akses atas semua materi pembelajaran ini khusus untuk user bersangkutan.
+      Haram hukumnya membagikan dalam bentuk apapun ke orang lain tanpa seizin pihak pemilik website.
+    </p>
+    <button type="button" class="btn-primary mt-6 w-full" @click="open = false">Saya Mengerti</button>
+  </div>
+</div>
+{% endif %}
 {% endblock %}
+
 
