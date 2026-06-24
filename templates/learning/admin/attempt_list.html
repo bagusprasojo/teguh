@@ -1,0 +1,3 @@
+{% extends "learning/admin/base_admin.html" %}
+{% block admin_content %}<div class="table-card"><table><thead><tr><th>User</th><th>CBT</th><th>Skor</th><th>Benar</th><th>Waktu</th></tr></thead><tbody>{% for attempt in attempts %}<tr><td>{{ attempt.user.username }}</td><td>{{ attempt.cbt.title }}</td><td>{{ attempt.score }}</td><td>{{ attempt.correct_answers }}/{{ attempt.total_questions }}</td><td>{{ attempt.submitted_at|date:"d M Y H:i" }}</td></tr>{% endfor %}</tbody></table></div>{% endblock %}
+

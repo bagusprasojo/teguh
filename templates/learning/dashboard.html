@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Koready{% endblock %}
+{% block content %}
+<section class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+  <div class="grid gap-6 lg:grid-cols-[1.4fr_.8fr]">
+    <div class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-zinc-200">
+      <p class="text-sm font-bold text-rose-700">Halo, {{ user.username }}</p>
+      <h1 class="mt-2 text-3xl font-black">Ruang belajar Korea kamu</h1>
+      {% if access.is_active %}<p class="mt-3 text-zinc-600">Akses aktif sampai <strong>{{ access.expires_at|date:"d M Y H:i" }}</strong>.</p>{% else %}<p class="mt-3 text-zinc-600">Akses belum aktif. Masukkan voucher untuk membuka video dan CBT.</p>{% endif %}
+      <div class="mt-6 flex flex-wrap gap-3"><a class="btn-primary" href="{% url 'video_list' %}">Video</a><a class="btn-muted" href="{% url 'cbt_list' %}">CBT</a><a class="btn-muted" href="{% url 'redeem_voucher' %}">Input Voucher</a></div>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-1"><div class="stat"><strong>{{ video_count }}</strong><span>Video aktif</span></div><div class="stat"><strong>{{ cbt_count }}</strong><span>CBT aktif</span></div></div>
+  </div>
+  <h2 class="mt-10 text-xl font-black">History CBT terbaru</h2>
+  <div class="mt-4 overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-zinc-200">
+    {% for attempt in attempts %}<a href="{% url 'attempt_detail' attempt.pk %}" class="flex items-center justify-between border-b border-zinc-100 p-4 hover:bg-zinc-50"><span>{{ attempt.cbt.title }}</span><strong>{{ attempt.score }}</strong></a>{% empty %}<p class="p-4 text-zinc-500">Belum ada history.</p>{% endfor %}
+  </div>
+</section>
+{% endblock %}
+

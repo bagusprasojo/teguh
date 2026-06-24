@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Koready{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body class="min-h-screen bg-stone-50 text-zinc-900 antialiased">
+  <header class="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/90 backdrop-blur">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+      <a href="{% url 'home' %}" class="text-xl font-black tracking-tight text-rose-700">Koready <span class="text-sm font-semibold text-zinc-500">한글</span></a>
+      <div class="flex items-center gap-2 text-sm font-semibold">
+        {% if user.is_authenticated %}
+          <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
+          {% if user.is_staff %}<a class="nav-link" href="{% url 'admin_dashboard' %}">Admin</a>{% endif %}
+          <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn-muted" type="submit">Keluar</button></form>
+        {% else %}
+          <a class="nav-link" href="{% url 'login' %}">Login</a>
+          <a class="btn-primary" href="{% url 'register' %}">Daftar</a>
+        {% endif %}
+      </div>
+    </nav>
+  </header>
+  {% if messages %}
+    <div class="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
+      {% for message in messages %}<div class="mb-2 rounded-md border border-zinc-200 bg-white px-4 py-3 text-sm shadow-sm">{{ message }}</div>{% endfor %}
+    </div>
+  {% endif %}
+  <main>{% block content %}{% endblock %}</main>
+  <a href="https://wa.me/6282247964226?text=Halo%20Koready%2C%20saya%20ingin%20bertanya%20tentang%20belajar%20Bahasa%20Korea" target="_blank" rel="noopener" class="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-2xl font-black text-white shadow-xl shadow-emerald-900/20" aria-label="WhatsApp">WA</a>
+</body>
+</html>
+

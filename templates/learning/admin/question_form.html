@@ -1,0 +1,19 @@
+{% extends "learning/admin/base_admin.html" %}
+{% block admin_content %}
+<div class="max-w-3xl">
+  <h2 class="text-2xl font-black">Soal untuk {{ cbt.title }}</h2>
+  <form method="post" class="form-card mt-5">
+    {% csrf_token %}{{ form.as_p }}
+    <h3 class="mt-6 font-black">Pilihan Jawaban</h3>
+    <p class="text-sm text-zinc-500">Isi maksimal 4 pilihan dan pilih satu jawaban benar.</p>
+    <div class="mt-3 space-y-3">
+      <div class="grid gap-2 rounded-md border border-zinc-200 p-3 sm:grid-cols-[1fr_auto]"><input name="choice_1" value="{{ choices.0.text }}" placeholder="Pilihan 1"><label class="flex items-center gap-2 text-sm font-bold"><input type="radio" name="correct_choice" value="1" {% if choices.0.is_correct %}checked{% endif %}> Benar</label></div>
+      <div class="grid gap-2 rounded-md border border-zinc-200 p-3 sm:grid-cols-[1fr_auto]"><input name="choice_2" value="{{ choices.1.text }}" placeholder="Pilihan 2"><label class="flex items-center gap-2 text-sm font-bold"><input type="radio" name="correct_choice" value="2" {% if choices.1.is_correct %}checked{% endif %}> Benar</label></div>
+      <div class="grid gap-2 rounded-md border border-zinc-200 p-3 sm:grid-cols-[1fr_auto]"><input name="choice_3" value="{{ choices.2.text }}" placeholder="Pilihan 3"><label class="flex items-center gap-2 text-sm font-bold"><input type="radio" name="correct_choice" value="3" {% if choices.2.is_correct %}checked{% endif %}> Benar</label></div>
+      <div class="grid gap-2 rounded-md border border-zinc-200 p-3 sm:grid-cols-[1fr_auto]"><input name="choice_4" value="{{ choices.3.text }}" placeholder="Pilihan 4"><label class="flex items-center gap-2 text-sm font-bold"><input type="radio" name="correct_choice" value="4" {% if choices.3.is_correct %}checked{% endif %}> Benar</label></div>
+    </div>
+    <div class="mt-5 flex gap-3"><button class="btn-primary" type="submit">Simpan Soal</button><a class="btn-muted" href="{% url 'admin_cbt_list' %}">Batal</a></div>
+  </form>
+</div>
+{% endblock %}
+

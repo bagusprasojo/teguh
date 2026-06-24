@@ -1,0 +1,24 @@
+﻿{% extends "base.html" %}
+{% block title %}{{ video.title }} - Koready{% endblock %}
+{% block content %}
+<section class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+  <a class="nav-link" href="{% url 'video_list' %}">Kembali</a>
+  <h1 class="mt-4 text-3xl font-black">{{ video.title }}</h1>
+  <div class="mt-6 aspect-video overflow-hidden rounded-lg bg-black shadow-sm">
+    <iframe
+      class="h-full w-full"
+      src="{{ video.embed_url }}"
+      title="{{ video.title }}"
+      loading="lazy"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowfullscreen>
+    </iframe>
+  </div>
+  <div class="mt-4 flex flex-wrap items-center gap-3 text-sm text-zinc-600">
+    <span>Jika video tidak bisa diputar di halaman ini, kemungkinan pemilik video membatasi embed.</span>
+    <a class="font-bold text-rose-700 hover:text-rose-800" href="{{ video.youtube_url }}" target="_blank" rel="noopener">Buka di YouTube</a>
+  </div>
+  <p class="mt-6 leading-7 text-zinc-700">{{ video.description|linebreaksbr }}</p>
+</section>
+{% endblock %}

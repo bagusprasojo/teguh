@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}{{ cbt.title }} - Koready{% endblock %}
+{% block content %}
+<section class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8"><h1 class="text-3xl font-black">{{ cbt.title }}</h1><p class="mt-2 text-zinc-600">{{ cbt.description }}</p><form method="post" class="mt-8 space-y-5">{% csrf_token %}{% for question in questions %}<div class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-zinc-200"><p class="font-black">{{ forloop.counter }}. {{ question.text|linebreaksbr }}</p><div class="mt-4 space-y-2">{% for choice in question.choices.all %}<label class="flex cursor-pointer items-start gap-3 rounded-md border border-zinc-200 p-3 hover:bg-rose-50"><input class="mt-1" type="radio" name="question_{{ question.id }}" value="{{ choice.id }}"><span>{{ choice.text }}</span></label>{% endfor %}</div></div>{% empty %}<p>Soal belum tersedia.</p>{% endfor %}{% if questions %}<button class="btn-primary" type="submit">Submit Jawaban</button>{% endif %}</form></section>
+{% endblock %}
+

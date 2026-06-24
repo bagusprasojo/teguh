@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Daftar - Koready{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-md px-4 py-16">
+  <h1 class="text-3xl font-black">Buat Akun</h1>
+  <form method="post" class="form-card mt-6">{% csrf_token %}{{ form.as_p }}<button class="btn-primary w-full" type="submit">Daftar</button></form>
+</div>
+{% endblock %}
+
