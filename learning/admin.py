@@ -1,8 +1,9 @@
 from django.contrib import admin
 
-from .models import CBT, CBTAttempt, CBTAttemptAnswer, Choice, Question, UserAccess, Video, Voucher
+from .models import CBT, CBTAttempt, CBTAttemptAnswer, Choice, Question, UserAccess, UserPreference, Video, Voucher
 
 admin.site.register(UserAccess)
+admin.site.register(UserPreference)
 admin.site.register(Voucher)
 admin.site.register(Video)
 admin.site.register(CBT)

@@ -1,7 +1,7 @@
-﻿from django.contrib.auth.models import User
+from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
-from learning.models import CBT, Choice, Question, UserAccess, Video, Voucher
+from learning.models import CBT, Choice, Question, UserAccess, UserPreference, Video, Voucher
 
 
 class Command(BaseCommand):
@@ -24,6 +24,8 @@ class Command(BaseCommand):
         )
         UserAccess.objects.get_or_create(user=admin)
         UserAccess.objects.get_or_create(user=demo_user)
+        UserPreference.objects.get_or_create(user=admin)
+        UserPreference.objects.get_or_create(user=demo_user, defaults={"theme_mode": "soft", "accent_color": "emerald", "text_size": "large"})
 
         self.seed_vouchers()
         self.seed_videos()

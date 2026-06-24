@@ -1,4 +1,4 @@
-﻿from django.contrib import messages
+from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
@@ -7,8 +7,8 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from .forms import CBTForm, QuestionForm, RegisterForm, VideoForm, VoucherForm, VoucherRedeemForm
-from .models import CBT, CBTAttempt, CBTAttemptAnswer, Choice, Question, UserAccess, Video, Voucher
+from .forms import CBTForm, QuestionForm, RegisterForm, UserPreferenceForm, VideoForm, VoucherForm, VoucherRedeemForm
+from .models import CBT, CBTAttempt, CBTAttemptAnswer, Choice, Question, UserAccess, UserPreference, Video, Voucher
 
 
 BRAND_NAME = "Koready"
@@ -95,6 +95,17 @@ def redeem_voucher(request):
                 messages.success(request, f"Voucher berhasil digunakan. Akses bertambah {voucher.duration_days} hari.")
                 return redirect("dashboard")
     return render(request, "learning/redeem_voucher.html", {"form": form, "access": get_access(request.user)})
+
+
+@login_required
+def appearance_settings(request):
+    preference, _ = UserPreference.objects.get_or_create(user=request.user)
+    form = UserPreferenceForm(request.POST or None, instance=preference)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Pengaturan tampilan berhasil disimpan.")
+        return redirect("appearance_settings")
+    return render(request, "learning/appearance_settings.html", {"form": form, "preference": preference})
 
 
 def access_required(request):

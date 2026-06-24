@@ -1,4 +1,4 @@
-﻿from django.contrib.auth import views as auth_views
+from django.contrib.auth import views as auth_views
 from django.urls import path
 
 from . import views
@@ -10,6 +10,7 @@ urlpatterns = [
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("dashboard/", views.dashboard, name="dashboard"),
     path("voucher/", views.redeem_voucher, name="redeem_voucher"),
+    path("settings/appearance/", views.appearance_settings, name="appearance_settings"),
     path("videos/", views.video_list, name="video_list"),
     path("videos/<int:pk>/", views.video_detail, name="video_detail"),
     path("cbt/", views.cbt_list, name="cbt_list"),

@@ -142,3 +142,48 @@ class CBTAttemptAnswer(models.Model):
     selected_choice = models.ForeignKey(Choice, on_delete=models.SET_NULL, null=True, blank=True)
     is_correct = models.BooleanField(default=False)
 
+
+
+class UserPreference(models.Model):
+    THEME_LIGHT = "light"
+    THEME_DARK = "dark"
+    THEME_SOFT = "soft"
+    THEME_CHOICES = [
+        (THEME_LIGHT, "Light"),
+        (THEME_DARK, "Dark"),
+        (THEME_SOFT, "Soft"),
+    ]
+
+    ACCENT_ROSE = "rose"
+    ACCENT_EMERALD = "emerald"
+    ACCENT_BLUE = "blue"
+    ACCENT_VIOLET = "violet"
+    ACCENT_AMBER = "amber"
+    ACCENT_CHOICES = [
+        (ACCENT_ROSE, "Rose"),
+        (ACCENT_EMERALD, "Emerald"),
+        (ACCENT_BLUE, "Blue"),
+        (ACCENT_VIOLET, "Violet"),
+        (ACCENT_AMBER, "Amber"),
+    ]
+
+    TEXT_NORMAL = "normal"
+    TEXT_LARGE = "large"
+    TEXT_XL = "xl"
+    TEXT_SIZE_CHOICES = [
+        (TEXT_NORMAL, "Normal"),
+        (TEXT_LARGE, "Besar"),
+        (TEXT_XL, "Ekstra besar"),
+    ]
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="preference")
+    theme_mode = models.CharField(max_length=20, choices=THEME_CHOICES, default=THEME_LIGHT)
+    accent_color = models.CharField(max_length=20, choices=ACCENT_CHOICES, default=ACCENT_ROSE)
+    text_size = models.CharField(max_length=20, choices=TEXT_SIZE_CHOICES, default=TEXT_NORMAL)
+
+    def __str__(self):
+        return f"{self.user.username} preference"
+
+    @property
+    def body_classes(self):
+        return f"theme-{self.theme_mode} accent-{self.accent_color} text-{self.text_size}"

@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
-from .models import CBT, Choice, Question, Video, Voucher
+from .models import CBT, Choice, Question, UserPreference, Video, Voucher
 
 
 class RegisterForm(UserCreationForm):
@@ -46,3 +46,14 @@ class ChoiceForm(forms.ModelForm):
         model = Choice
         fields = ["text", "is_correct"]
 
+
+
+class UserPreferenceForm(forms.ModelForm):
+    class Meta:
+        model = UserPreference
+        fields = ["theme_mode", "accent_color", "text_size"]
+        labels = {
+            "theme_mode": "Mode warna",
+            "accent_color": "Warna aksen",
+            "text_size": "Ukuran teks",
+        }

@@ -1,0 +1,67 @@
+﻿{% extends "base.html" %}
+{% block title %}Pengaturan Tampilan - Koready{% endblock %}
+{% block content %}
+<section
+  class="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8"
+  x-data="{
+    theme: '{{ preference.theme_mode }}',
+    accent: '{{ preference.accent_color }}',
+    textSize: '{{ preference.text_size }}',
+    applyTheme() {
+      document.body.classList.remove('theme-light', 'theme-dark', 'theme-soft', 'accent-rose', 'accent-emerald', 'accent-blue', 'accent-violet', 'accent-amber', 'text-normal', 'text-large', 'text-xl');
+      document.body.classList.add(`theme-${this.theme}`, `accent-${this.accent}`, `text-${this.textSize}`);
+    }
+  }"
+  x-init="applyTheme()"
+>
+  <div>
+    <p class="text-sm font-bold text-rose-700">Gayaku Belajar</p>
+    <h1 class="mt-2 text-3xl font-black">Pengaturan Tampilan</h1>
+    <p class="mt-3 leading-7 text-zinc-600">Atur suasana belajar yang paling nyaman untuk membaca Hangul, menonton video, dan mengerjakan CBT.</p>
+    <form method="post" class="form-card mt-6">
+      {% csrf_token %}
+      <p>
+        <label for="id_theme_mode">Mode warna</label>
+        <select id="id_theme_mode" name="theme_mode" x-model="theme" @change="applyTheme()">
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+          <option value="soft">Soft</option>
+        </select>
+      </p>
+      <p>
+        <label for="id_accent_color">Warna aksen</label>
+        <select id="id_accent_color" name="accent_color" x-model="accent" @change="applyTheme()">
+          <option value="rose">Rose</option>
+          <option value="emerald">Emerald</option>
+          <option value="blue">Blue</option>
+          <option value="violet">Violet</option>
+          <option value="amber">Amber</option>
+        </select>
+      </p>
+      <p>
+        <label for="id_text_size">Ukuran teks</label>
+        <select id="id_text_size" name="text_size" x-model="textSize" @change="applyTheme()">
+          <option value="normal">Normal</option>
+          <option value="large">Besar</option>
+          <option value="xl">Ekstra besar</option>
+        </select>
+      </p>
+      <button class="btn-primary w-full" type="submit">Simpan Pengaturan</button>
+    </form>
+  </div>
+  <div class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-zinc-200 preview-panel">
+    <p class="text-sm font-black uppercase tracking-wide text-rose-700">Preview</p>
+    <h2 class="mt-3 text-3xl font-black">&#50504;&#45397;&#54616;&#49464;&#50836;, {{ user.username }}</h2>
+    <p class="mt-3 leading-7 text-zinc-600">Tampilan berubah langsung saat pilihan diganti. Klik simpan agar tersimpan untuk login berikutnya.</p>
+    <div class="mt-6 grid gap-4 sm:grid-cols-2">
+      <div class="stat"><strong>5</strong><span>Video aktif</span></div>
+      <div class="stat"><strong>5</strong><span>CBT aktif</span></div>
+    </div>
+    <div class="mt-6 rounded-lg border border-zinc-200 p-4 preview-card">
+      <p class="font-black">Contoh materi</p>
+      <p class="mt-2 text-zinc-600">&#54617;&#44368; dibaca hakgyo dan berarti sekolah.</p>
+      <button class="btn-primary mt-4" type="button">Tombol Aksen</button>
+    </div>
+  </div>
+</section>
+{% endblock %}
