@@ -48,6 +48,16 @@ class VideoForm(forms.ModelForm):
     class Meta:
         model = Video
         fields = ["title", "description", "youtube_url", "cover", "is_active"]
+        labels = {
+            "title": "Judul",
+            "description": "Deskripsi",
+            "youtube_url": "URL YouTube",
+            "cover": "Cover",
+            "is_active": "Aktif",
+        }
+        help_texts = {
+            "cover": "Kosongkan cover jika ingin otomatis memakai thumbnail YouTube sebagai cover.",
+        }
 
 
 class VoucherForm(forms.ModelForm):
