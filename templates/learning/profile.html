@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Profil - Koready{% endblock %}
+{% block content %}
+<section class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+  <div class="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+    <aside class="space-y-6">
+      <div class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-zinc-200 preview-panel">
+        <p class="text-sm font-bold text-rose-700">Profil Akun</p>
+        <h1 class="mt-2 text-3xl font-black">{{ user.username }}</h1>
+        <p class="mt-2 text-zinc-600">{{ user.email|default:"Email belum diisi" }}</p>
+        <div class="mt-5 grid gap-3 text-sm">
+          <div class="rounded-md border border-zinc-200 p-3 preview-card">
+            <p class="font-bold">Role</p>
+            <p class="mt-1 text-zinc-600">{% if user.is_staff %}Admin{% else %}User{% endif %}</p>
+          </div>
+          {% if not user.is_staff %}
+          <div class="rounded-md border border-zinc-200 p-3 preview-card">
+            <p class="font-bold">Status akses</p>
+            {% if access.is_active %}
+              <p class="mt-1 text-zinc-600">Aktif sampai {{ access.expires_at|date:"d M Y H:i" }}</p>
+            {% else %}
+              <p class="mt-1 text-zinc-600">Belum aktif atau sudah berakhir</p>
+            {% endif %}
+          </div>
+          {% endif %}
+          <div class="rounded-md border border-zinc-200 p-3 preview-card">
+            <p class="font-bold">Tema aktif</p>
+            <p class="mt-1 text-zinc-600">{{ preference.get_theme_mode_display }} · {{ preference.get_accent_color_display }} · {{ preference.get_text_size_display }}</p>
+          </div>
+        </div>
+        <div class="mt-5 flex flex-wrap gap-2">
+          <a class="btn-muted" href="{% url 'appearance_settings' %}">Ubah Tampilan</a>
+          {% if not user.is_staff %}<a class="btn-muted" href="{% url 'redeem_voucher' %}">Input Voucher</a>{% endif %}
+        </div>
+      </div>
+    </aside>
+
+    <div class="space-y-6">
+      <div class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-zinc-200 preview-panel">
+        <h2 class="text-2xl font-black">Edit Profil</h2>
+        <form method="post" class="form-card mt-5">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <button class="btn-primary w-full" type="submit">Simpan Profil</button>
+        </form>
+      </div>
+
+      {% if not user.is_staff %}
+      <div class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-zinc-200 preview-panel">
+        <h2 class="text-2xl font-black">History CBT Terbaru</h2>
+        <div class="mt-4 overflow-hidden rounded-lg border border-zinc-200">
+          {% for attempt in attempts %}
+          <a href="{% url 'attempt_detail' attempt.uuid %}" class="grid gap-2 border-b border-zinc-100 p-4 hover:bg-zinc-50 sm:grid-cols-4">
+            <span class="font-bold">{{ attempt.cbt.title }}</span>
+            <span>Skor {{ attempt.score }}</span>
+            <span>{{ attempt.correct_answers }}/{{ attempt.total_questions }}</span>
+            <span>{{ attempt.submitted_at|date:"d M Y H:i" }}</span>
+          </a>
+          {% empty %}
+          <p class="p-4 text-zinc-600">Belum ada history CBT.</p>
+          {% endfor %}
+        </div>
+      </div>
+      {% else %}
+      <div class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-zinc-200 preview-panel">
+        <h2 class="text-2xl font-black">Akses Admin</h2>
+        <p class="mt-2 text-zinc-600">Akun ini dapat mengelola video, CBT, voucher, user, dan history hasil CBT melalui dashboard admin custom.</p>
+        <a class="btn-primary mt-5" href="{% url 'admin_dashboard' %}">Buka Dashboard Admin</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

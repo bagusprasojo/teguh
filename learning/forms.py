@@ -6,12 +6,39 @@ from .models import CBT, Choice, Question, UserPreference, Video, Voucher
 
 
 class RegisterForm(UserCreationForm):
-    email = forms.EmailField(required=True)
+    email = forms.EmailField(required=True, label="Email")
 
     class Meta:
         model = User
         fields = ["username", "email", "password1", "password2"]
+        labels = {
+            "username": "Username",
+        }
+        help_texts = {
+            "username": "Gunakan huruf, angka, atau karakter @/./+/-/_.",
+        }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["password1"].label = "Password"
+        self.fields["password2"].label = "Konfirmasi password"
+        self.fields["password1"].help_text = "Minimal 8 karakter dan jangan memakai password yang terlalu umum."
+        self.fields["password2"].help_text = "Masukkan password yang sama untuk konfirmasi."
+
+
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ["username", "first_name", "last_name", "email"]
+        labels = {
+            "username": "Username",
+            "first_name": "Nama depan",
+            "last_name": "Nama belakang",
+            "email": "Email",
+        }
+        help_texts = {
+            "username": "Username dipakai untuk login.",
+        }
 
 class VoucherRedeemForm(forms.Form):
     code = forms.CharField(max_length=40, label="Kode voucher")

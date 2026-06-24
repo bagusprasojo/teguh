@@ -7,7 +7,7 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from .forms import CBTForm, QuestionForm, RegisterForm, UserPreferenceForm, VideoForm, VoucherForm, VoucherRedeemForm
+from .forms import CBTForm, QuestionForm, RegisterForm, UserPreferenceForm, UserProfileForm, VideoForm, VoucherForm, VoucherRedeemForm
 from .models import CBT, CBTAttempt, CBTAttemptAnswer, Choice, Question, UserAccess, UserPreference, Video, Voucher
 
 
@@ -56,6 +56,24 @@ def register(request):
         messages.success(request, "Akun berhasil dibuat. Masukkan voucher untuk membuka akses belajar.")
         return redirect("dashboard")
     return render(request, "registration/register.html", {"form": form, "brand_name": BRAND_NAME})
+
+
+@login_required
+def profile(request):
+    access = get_access(request.user) if not request.user.is_staff else None
+    preference, _ = UserPreference.objects.get_or_create(user=request.user)
+    form = UserProfileForm(request.POST or None, instance=request.user)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Profil berhasil disimpan.")
+        return redirect("profile")
+    attempts = CBTAttempt.objects.filter(user=request.user).select_related("cbt")[:5]
+    return render(request, "learning/profile.html", {
+        "form": form,
+        "access": access,
+        "preference": preference,
+        "attempts": attempts,
+    })
 
 
 @login_required
@@ -123,10 +141,10 @@ def video_list(request):
 
 
 @login_required
-def video_detail(request, pk):
+def video_detail(request, uuid):
     if not access_required(request):
         return redirect("redeem_voucher")
-    video = get_object_or_404(Video, pk=pk, is_active=True)
+    video = get_object_or_404(Video, uuid=uuid, is_active=True)
     return render(request, "learning/video_detail.html", {"video": video})
 
 
@@ -139,10 +157,10 @@ def cbt_list(request):
 
 
 @login_required
-def cbt_take(request, pk):
+def cbt_take(request, uuid):
     if not access_required(request):
         return redirect("redeem_voucher")
-    cbt = get_object_or_404(CBT.objects.prefetch_related("questions__choices"), pk=pk, is_active=True)
+    cbt = get_object_or_404(CBT.objects.prefetch_related("questions__choices"), uuid=uuid, is_active=True)
     questions = list(cbt.questions.all())
     if request.method == "POST":
         attempt = CBTAttempt.objects.create(user=request.user, cbt=cbt, total_questions=len(questions))
@@ -157,7 +175,7 @@ def cbt_take(request, pk):
         attempt.score = round((correct / len(questions)) * 100) if questions else 0
         attempt.submitted_at = timezone.now()
         attempt.save(update_fields=["correct_answers", "score", "submitted_at"])
-        return redirect("attempt_detail", pk=attempt.pk)
+        return redirect("attempt_detail", uuid=attempt.uuid)
     return render(request, "learning/cbt_take.html", {"cbt": cbt, "questions": questions})
 
 
@@ -168,8 +186,8 @@ def history(request):
 
 
 @login_required
-def attempt_detail(request, pk):
-    attempt = get_object_or_404(CBTAttempt.objects.select_related("cbt"), pk=pk, user=request.user)
+def attempt_detail(request, uuid):
+    attempt = get_object_or_404(CBTAttempt.objects.select_related("cbt"), uuid=uuid, user=request.user)
     answers = attempt.answers.select_related("question", "selected_choice").prefetch_related("question__choices")
     return render(request, "learning/attempt_detail.html", {"attempt": attempt, "answers": answers})
 
@@ -191,8 +209,8 @@ def admin_video_list(request):
 
 
 @admin_required
-def admin_video_form(request, pk=None):
-    video = get_object_or_404(Video, pk=pk) if pk else None
+def admin_video_form(request, uuid=None):
+    video = get_object_or_404(Video, uuid=uuid) if uuid else None
     form = VideoForm(request.POST or None, request.FILES or None, instance=video)
     if request.method == "POST" and form.is_valid():
         form.save()
@@ -207,8 +225,8 @@ def admin_voucher_list(request):
 
 
 @admin_required
-def admin_voucher_form(request, pk=None):
-    voucher = get_object_or_404(Voucher, pk=pk) if pk else None
+def admin_voucher_form(request, uuid=None):
+    voucher = get_object_or_404(Voucher, uuid=uuid) if uuid else None
     form = VoucherForm(request.POST or None, instance=voucher)
     if request.method == "POST" and form.is_valid():
         form.save()
@@ -224,8 +242,8 @@ def admin_cbt_list(request):
 
 
 @admin_required
-def admin_cbt_form(request, pk=None):
-    cbt = get_object_or_404(CBT, pk=pk) if pk else None
+def admin_cbt_form(request, uuid=None):
+    cbt = get_object_or_404(CBT, uuid=uuid) if uuid else None
     form = CBTForm(request.POST or None, instance=cbt)
     if request.method == "POST" and form.is_valid():
         form.save()
@@ -235,9 +253,9 @@ def admin_cbt_form(request, pk=None):
 
 
 @admin_required
-def admin_question_form(request, cbt_pk=None, pk=None):
-    question = get_object_or_404(Question, pk=pk) if pk else None
-    cbt = question.cbt if question else get_object_or_404(CBT, pk=cbt_pk)
+def admin_question_form(request, cbt_uuid=None, uuid=None):
+    question = get_object_or_404(Question, uuid=uuid) if uuid else None
+    cbt = question.cbt if question else get_object_or_404(CBT, uuid=cbt_uuid)
     form = QuestionForm(request.POST or None, instance=question)
     existing = list(question.choices.all()) if question else []
     if request.method == "POST" and form.is_valid():

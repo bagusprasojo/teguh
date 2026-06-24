@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}Dashboard - Koready{% if show_access_notice and not user.is_staff %}
 <div x-data="{ open: true }" x-show="open" x-cloak class="fixed inset-0 z-[60] flex items-center justify-center bg-zinc-950/70 px-4">
   <div class="w-full max-w-lg rounded-lg bg-white p-6 shadow-2xl ring-1 ring-zinc-200" x-transition>
@@ -26,7 +26,7 @@
   </div>
   <h2 class="mt-10 text-xl font-black">History CBT terbaru</h2>
   <div class="mt-4 overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-zinc-200">
-    {% for attempt in attempts %}<a href="{% url 'attempt_detail' attempt.pk %}" class="flex items-center justify-between border-b border-zinc-100 p-4 hover:bg-zinc-50"><span>{{ attempt.cbt.title }}</span><strong>{{ attempt.score }}</strong></a>{% empty %}<p class="p-4 text-zinc-500">Belum ada history.</p>{% endfor %}
+    {% for attempt in attempts %}<a href="{% url 'attempt_detail' attempt.uuid %}" class="flex items-center justify-between border-b border-zinc-100 p-4 hover:bg-zinc-50"><span>{{ attempt.cbt.title }}</span><strong>{{ attempt.score }}</strong></a>{% empty %}<p class="p-4 text-zinc-500">Belum ada history.</p>{% endfor %}
   </div>
 </section>
 {% if show_access_notice and not user.is_staff %}

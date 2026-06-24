@@ -1,3 +1,4 @@
+import uuid
 from urllib.parse import parse_qs, urlparse
 
 from django.conf import settings
@@ -6,6 +7,7 @@ from django.utils import timezone
 
 
 class UserAccess(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="access")
     expires_at = models.DateTimeField(null=True, blank=True)
 
@@ -23,6 +25,7 @@ class UserAccess(models.Model):
 
 
 class Voucher(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     code = models.CharField(max_length=40, unique=True)
     duration_days = models.PositiveIntegerField()
     is_active = models.BooleanField(default=True)
@@ -42,6 +45,7 @@ class Voucher(models.Model):
 
 
 class Video(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     title = models.CharField(max_length=180)
     description = models.TextField()
     youtube_url = models.URLField()
@@ -82,6 +86,7 @@ class Video(models.Model):
 
 
 class CBT(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     title = models.CharField(max_length=180)
     description = models.TextField(blank=True)
     passing_score = models.PositiveIntegerField(default=70)
@@ -98,6 +103,7 @@ class CBT(models.Model):
 
 
 class Question(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     cbt = models.ForeignKey(CBT, on_delete=models.CASCADE, related_name="questions")
     text = models.TextField()
     explanation = models.TextField(blank=True)
@@ -111,6 +117,7 @@ class Question(models.Model):
 
 
 class Choice(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="choices")
     text = models.CharField(max_length=500)
     is_correct = models.BooleanField(default=False)
@@ -120,6 +127,7 @@ class Choice(models.Model):
 
 
 class CBTAttempt(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="cbt_attempts")
     cbt = models.ForeignKey(CBT, on_delete=models.CASCADE, related_name="attempts")
     score = models.PositiveIntegerField(default=0)
@@ -137,6 +145,7 @@ class CBTAttempt(models.Model):
 
 
 class CBTAttemptAnswer(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     attempt = models.ForeignKey(CBTAttempt, on_delete=models.CASCADE, related_name="answers")
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     selected_choice = models.ForeignKey(Choice, on_delete=models.SET_NULL, null=True, blank=True)
@@ -145,6 +154,7 @@ class CBTAttemptAnswer(models.Model):
 
 
 class UserPreference(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     THEME_LIGHT = "light"
     THEME_DARK = "dark"
     THEME_SOFT = "soft"
