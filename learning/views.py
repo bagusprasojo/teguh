@@ -4,10 +4,12 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView
 from django.db import transaction
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from .forms import CBTForm, QuestionForm, RegisterForm, UserPreferenceForm, UserProfileForm, VideoForm, VoucherForm, VoucherRedeemForm
+from .importers import build_cbt_import_template_xlsx, import_cbt_from_excel
+from .forms import CBTForm, CBTImportForm, QuestionForm, RegisterForm, UserPreferenceForm, UserProfileForm, VideoForm, VoucherForm, VoucherRedeemForm
 from .models import CBT, CBTAttempt, CBTAttemptAnswer, Choice, Question, UserAccess, UserPreference, Video, Voucher
 
 
@@ -233,6 +235,36 @@ def admin_voucher_form(request, uuid=None):
         messages.success(request, "Voucher berhasil disimpan.")
         return redirect("admin_voucher_list")
     return render(request, "learning/admin/model_form.html", {"form": form, "title": "Voucher", "back_url": "admin_voucher_list"})
+
+
+@admin_required
+def admin_cbt_import_template(request):
+    content = build_cbt_import_template_xlsx()
+    response = HttpResponse(
+        content,
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = 'attachment; filename="template_import_cbt.xlsx"'
+    return response
+
+
+@admin_required
+def admin_cbt_import(request):
+    form = CBTImportForm(request.POST or None, request.FILES or None)
+    result = None
+    if request.method == "POST" and form.is_valid():
+        result = import_cbt_from_excel(
+            form.cleaned_data["file"],
+            form.cleaned_data["mode"],
+        )
+        if result.ok:
+            messages.success(
+                request,
+                f"Import berhasil. CBT baru: {result.created_cbts}, CBT diperbarui: {result.updated_cbts}, soal: {result.created_questions}, pilihan: {result.created_choices}.",
+            )
+            return redirect("admin_cbt_list")
+        messages.error(request, "Import gagal. Periksa daftar error di bawah.")
+    return render(request, "learning/admin/cbt_import.html", {"form": form, "result": result})
 
 
 @admin_required

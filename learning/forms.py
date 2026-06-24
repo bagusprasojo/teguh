@@ -94,3 +94,29 @@ class UserPreferenceForm(forms.ModelForm):
             "accent_color": "Warna aksen",
             "text_size": "Ukuran teks",
         }
+
+
+class CBTImportForm(forms.Form):
+    MODE_REPLACE = "replace"
+    MODE_APPEND = "append"
+    MODE_CHOICES = [
+        (MODE_REPLACE, "Replace - hapus soal lama pada CBT yang sama"),
+        (MODE_APPEND, "Append - tambahkan soal ke CBT yang sudah ada"),
+    ]
+
+    file = forms.FileField(
+        label="File Excel (.xlsx)",
+        help_text="Upload file .xlsx sesuai format kolom yang disediakan.",
+    )
+    mode = forms.ChoiceField(
+        label="Mode import",
+        choices=MODE_CHOICES,
+        initial=MODE_REPLACE,
+        widget=forms.RadioSelect,
+    )
+
+    def clean_file(self):
+        uploaded = self.cleaned_data["file"]
+        if not uploaded.name.lower().endswith(".xlsx"):
+            raise forms.ValidationError("File harus berformat .xlsx.")
+        return uploaded
