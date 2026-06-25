@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
-from learning.models import CBT, Choice, Question, UserAccess, UserPreference, Video, Voucher
+from learning.models import CBT, Choice, Question, UBT, UBTChoice, UBTPackage, UBTQuestion, UserAccess, UserPreference, Video, Voucher
 
 
 class Command(BaseCommand):
@@ -30,6 +30,7 @@ class Command(BaseCommand):
         self.seed_vouchers()
         self.seed_videos()
         self.seed_cbts()
+        self.seed_ubt()
 
         self.stdout.write(self.style.SUCCESS("Seeder selesai."))
         self.stdout.write("Admin: admin / admin12345")
@@ -164,3 +165,40 @@ class Command(BaseCommand):
                     Choice.objects.create(question=question, text=choice_text, is_correct=index == correct_index)
             self.stdout.write(f"CBT siap: id={cbt.pk}")
 
+
+    def seed_ubt(self):
+        packages = [
+            ("UBT Basic", "Paket UBT latihan dasar Bahasa Korea.", 150000, 30),
+            ("UBT Intensive", "Paket UBT intensif dengan masa akses lebih panjang.", 250000, 60),
+        ]
+        for name, description, price, days in packages:
+            package, _ = UBTPackage.objects.update_or_create(
+                name=name,
+                defaults={
+                    "description": description,
+                    "price": price,
+                    "access_duration_days": days,
+                    "is_active": True,
+                },
+            )
+            self.stdout.write(f"Paket UBT siap: id={package.pk}")
+
+        ubt, _ = UBT.objects.update_or_create(
+            title="UBT Bahasa Korea Dasar",
+            defaults={
+                "description": "Latihan UBT dasar Bahasa Korea.",
+                "passing_score": 70,
+                "is_active": True,
+            },
+        )
+        ubt.questions.all().delete()
+        questions = [
+            ("Apa arti kata sekolah?", ["Sekolah", "Rumah", "Pasar", "Kantor"], 0, "hakgyo berarti sekolah."),
+            ("Apa arti kata air?", ["Air", "Buku", "Makanan", "Teman"], 0, "mul berarti air."),
+            ("Sapaan sopan untuk halo adalah?", ["Annyeonghaseyo", "Kamsahamnida", "Mianhamnida", "Jaljayo"], 0, "Annyeonghaseyo adalah salam sopan."),
+        ]
+        for order, (text, choices, correct_index, explanation) in enumerate(questions, start=1):
+            question = UBTQuestion.objects.create(ubt=ubt, text=text, explanation=explanation, order=order)
+            for index, choice_text in enumerate(choices):
+                UBTChoice.objects.create(question=question, text=choice_text, is_correct=index == correct_index)
+        self.stdout.write(f"UBT siap: id={ubt.pk}")

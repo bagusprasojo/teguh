@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% block title %}Koready - Belajar Bahasa Korea{% endblock %}
 {% block content %}
 <section class="relative overflow-hidden bg-zinc-950 text-white">
@@ -13,7 +13,12 @@
         <a href="{% url 'register' %}" class="btn-primary px-6 py-3">Mulai Belajar</a>
         <a href="{% url 'login' %}" class="rounded-md border border-white/30 px-6 py-3 font-bold text-white hover:bg-white/10">Login</a>
       </div>
-    </div>
+      <div class="mt-10 grid gap-3 sm:grid-cols-4">
+        <div class="landing-stat"><strong>{{ visitor_count_display }}+</strong><span>Pengunjung</span></div>
+        <div class="landing-stat"><strong>{{ user_count }}+</strong><span>User belajar</span></div>
+        <div class="landing-stat"><strong>{{ video_count }}+</strong><span>Video</span></div>
+        <div class="landing-stat"><strong>{{ cbt_count }}+</strong><span>CBT</span></div>
+      </div>    </div>
   </div>
 </section>
 <section class="mx-auto grid max-w-7xl gap-6 px-4 py-14 sm:px-6 md:grid-cols-3 lg:px-8">
@@ -22,4 +27,5 @@
   <div class="feature"><span>03</span><h2>Akses Voucher</h2><p>Masa belajar bertambah setiap user menukarkan voucher baru.</p></div>
 </section>
 {% endblock %}
+
 

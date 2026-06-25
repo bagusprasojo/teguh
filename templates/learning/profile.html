@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% block title %}Profil - Koready{% endblock %}
 {% block content %}
 <section class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -6,7 +6,7 @@
     <aside class="space-y-6">
       <div class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-zinc-200 preview-panel">
         <p class="text-sm font-bold text-rose-700">Profil Akun</p>
-        <h1 class="mt-2 text-3xl font-black">{{ user.username }}</h1>
+        <div class="mt-4 flex items-center gap-4">{% if user_profile.photo %}<img src="{{ user_profile.photo.url }}" alt="{{ user_profile.display_name }}" class="h-20 w-20 rounded-full object-cover ring-2 ring-zinc-200">{% else %}<div class="profile-page-avatar-initials">{{ user_profile.initials }}</div>{% endif %}<div><h1 class="text-3xl font-black">{{ user_profile.display_name }}</h1><p class="mt-1 text-sm font-bold text-zinc-500">@{{ user.username }}</p></div></div>
         <p class="mt-2 text-zinc-600">{{ user.email|default:"Email belum diisi" }}</p>
         <div class="mt-5 grid gap-3 text-sm">
           <div class="rounded-md border border-zinc-200 p-3 preview-card">
@@ -38,9 +38,10 @@
     <div class="space-y-6">
       <div class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-zinc-200 preview-panel">
         <h2 class="text-2xl font-black">Edit Profil</h2>
-        <form method="post" class="form-card mt-5">
+        <form method="post" enctype="multipart/form-data" class="form-card mt-5">
           {% csrf_token %}
           {{ form.as_p }}
+          {{ photo_form.as_p }}
           <button class="btn-primary w-full" type="submit">Simpan Profil</button>
         </form>
       </div>
@@ -72,3 +73,6 @@
   </div>
 </section>
 {% endblock %}
+
+
+

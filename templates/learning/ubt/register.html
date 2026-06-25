@@ -1,0 +1,9 @@
+﻿{% extends "base.html" %}
+{% block title %}Daftar UBT - Koready{% endblock %}
+{% block content %}
+<section class="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
+  <h1 class="text-3xl font-black">Pendaftaran UBT</h1>
+  <p class="mt-2 text-zinc-600">Pilih paket UBT dan lengkapi data pendaftaran. Instruksi pembayaran akan dikirimkan ke email.</p>
+  <form method="post" class="form-card mt-6">{% csrf_token %}{{ form.as_p }}<button class="btn-primary w-full" type="submit">Kirim Pendaftaran</button></form>
+</section>
+{% endblock %}

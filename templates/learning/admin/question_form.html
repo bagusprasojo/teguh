@@ -2,7 +2,7 @@
 {% block admin_content %}
 <div class="max-w-3xl">
   <h2 class="text-2xl font-black">Soal untuk {{ cbt.title }}</h2>
-  <form method="post" class="form-card mt-5">
+  <form method="post" enctype="multipart/form-data" class="form-card mt-5">
     {% csrf_token %}{{ form.as_p }}
     <h3 class="mt-6 font-black">Pilihan Jawaban</h3>
     <p class="text-sm text-zinc-500">Isi maksimal 4 pilihan dan pilih satu jawaban benar.</p>

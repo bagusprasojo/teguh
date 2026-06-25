@@ -1,0 +1,22 @@
+﻿{% extends "base.html" %}
+{% block title %}Detail Pendaftaran UBT - Koready{% endblock %}
+{% block content %}
+<section class="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+  <div class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-zinc-200 preview-panel">
+    <p class="text-sm font-bold text-rose-700">{{ registration.get_status_display }}</p>
+    <h1 class="mt-2 text-3xl font-black">{{ registration.package.name }}</h1>
+    <div class="mt-5 grid gap-3 text-sm sm:grid-cols-2">
+      <div class="rounded-md border border-zinc-200 p-3 preview-card"><p class="font-bold">Nominal</p><p class="mt-1">Rp{{ registration.package.price }}</p></div>
+      <div class="rounded-md border border-zinc-200 p-3 preview-card"><p class="font-bold">Masa berlaku voucher</p><p class="mt-1">{{ registration.package.access_duration_days }} hari</p></div>
+      <div class="rounded-md border border-zinc-200 p-3 preview-card"><p class="font-bold">Nama</p><p class="mt-1">{{ registration.full_name }}</p></div>
+      <div class="rounded-md border border-zinc-200 p-3 preview-card"><p class="font-bold">WhatsApp</p><p class="mt-1">{{ registration.whatsapp_number }}</p></div>
+    </div>
+    {% if registration.voucher %}
+      <div class="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-emerald-900"><p class="font-black">Voucher UBT</p><p class="mt-1 text-2xl font-black">{{ registration.voucher.code }}</p></div>
+    {% else %}
+      <p class="mt-5 text-zinc-600">Setelah membayar, konfirmasi pembayaran ke admin melalui WhatsApp.</p>
+      <a class="btn-primary mt-4" target="_blank" rel="noopener" href="https://wa.me/{{ admin_whatsapp }}?text={{ whatsapp_text|urlencode }}">Konfirmasi via WhatsApp</a>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

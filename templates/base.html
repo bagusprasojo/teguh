@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="id">
 <head>
   <meta charset="utf-8">
@@ -14,11 +14,50 @@
       <a href="{% url 'home' %}" class="text-xl font-black tracking-tight text-rose-700 brand-link">Koready <span class="text-sm font-semibold text-zinc-500">&#54620;&#44544;</span></a>
       <div class="flex items-center gap-2 text-sm font-semibold">
         {% if user.is_authenticated %}
-          <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
-          <a class="nav-link" href="{% url 'profile' %}">Profil</a>
-          <a class="nav-link" href="{% url 'appearance_settings' %}">Ubah Tampilan</a>
-          {% if user.is_staff %}<a class="nav-link" href="{% url 'admin_dashboard' %}">Admin</a>{% endif %}
-          <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn-muted" type="submit">Keluar</button></form>
+          {% if user.is_staff %}
+            <a class="nav-link" href="{% url 'admin_dashboard' %}">Dashboard</a>
+            <div class="relative" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
+              <button type="button" class="nav-link" @click="open = !open">Materi Pembelajaran</button>
+              <div x-cloak x-show="open" x-transition class="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-md border border-zinc-200 bg-white py-2 shadow-lg dropdown-menu">
+                <a class="dropdown-link" href="{% url 'admin_video_list' %}">Video</a>
+                <a class="dropdown-link" href="{% url 'admin_voucher_list' %}">Voucher</a>
+                <a class="dropdown-link" href="{% url 'admin_cbt_list' %}">CBT</a>
+                <a class="dropdown-link" href="{% url 'admin_attempt_list' %}">Hasil</a>
+              </div>
+            </div>
+            <div class="relative" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
+              <button type="button" class="nav-link" @click="open = !open">UBT</button>
+              <div x-cloak x-show="open" x-transition class="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-md border border-zinc-200 bg-white py-2 shadow-lg dropdown-menu">
+                <a class="dropdown-link" href="{% url 'admin_ubt_package_list' %}">Paket UBT</a>
+                <a class="dropdown-link" href="{% url 'admin_ubt_registration_list' %}">Pendaftaran UBT</a>
+                <a class="dropdown-link" href="{% url 'admin_ubt_list' %}">UBT</a>
+              </div>
+            </div>
+            <a class="nav-link" href="{% url 'admin_user_list' %}">User</a>
+          {% else %}
+            <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
+            <a class="nav-link" href="{% url 'video_list' %}">Video</a>
+            <a class="nav-link" href="{% url 'cbt_list' %}">CBT</a>
+            <a class="nav-link" href="{% url 'ubt_dashboard' %}">UBT</a>
+          {% endif %}
+          <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+            <button type="button" class="profile-menu-button" @click="open = !open" aria-label="Menu profil">
+              <span class="hidden max-w-40 truncate sm:inline">{{ nav_display_name }}</span>
+              {% if nav_profile.photo %}
+                <img src="{{ nav_profile.photo.url }}" alt="{{ nav_display_name }}" class="profile-avatar">
+              {% else %}
+                <span class="profile-avatar profile-avatar-initials">{{ nav_initials }}</span>
+              {% endif %}
+            </button>
+            <div x-cloak x-show="open" x-transition class="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-md border border-zinc-200 bg-white py-2 shadow-lg dropdown-menu">
+              <a class="dropdown-link" href="{% url 'profile' %}">Profile</a>
+              <a class="dropdown-link" href="{% url 'appearance_settings' %}">Ubah Tampilan</a>
+              <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button class="dropdown-link text-left" type="submit">Keluar</button>
+              </form>
+            </div>
+          </div>
         {% else %}
           <a class="nav-link" href="{% url 'login' %}">Login</a>
           <a class="btn-primary" href="{% url 'register' %}">Daftar</a>
@@ -35,3 +74,7 @@
   <a href="https://wa.me/6282247964226?text=Halo%20Koready%2C%20saya%20ingin%20bertanya%20tentang%20belajar%20Bahasa%20Korea" target="_blank" rel="noopener" class="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-2xl font-black text-white shadow-xl shadow-emerald-900/20" aria-label="WhatsApp">WA</a>
 </body>
 </html>
+
+
+
+

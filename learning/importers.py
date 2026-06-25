@@ -1,23 +1,22 @@
 ﻿from dataclasses import dataclass, field
+from io import BytesIO
+from zipfile import ZIP_DEFLATED, ZipFile
+from xml.sax.saxutils import escape
 
 from django.db import transaction
 
-from .models import CBT, Choice, Question
+from .models import CBT, Choice, Question, UBT, UBTChoice, UBTQuestion
 
 
-REQUIRED_COLUMNS = [
-    "cbt_title",
-    "cbt_description",
-    "passing_score",
-    "question_order",
-    "question_text",
-    "choice_a",
-    "choice_b",
-    "choice_c",
-    "choice_d",
-    "correct_choice",
-    "explanation",
+CBT_REQUIRED_COLUMNS = [
+    "cbt_title", "cbt_description", "passing_score", "question_order", "question_text",
+    "choice_a", "choice_b", "choice_c", "choice_d", "correct_choice", "explanation",
 ]
+UBT_REQUIRED_COLUMNS = [
+    "ubt_title", "ubt_description", "passing_score", "question_order", "question_text",
+    "choice_a", "choice_b", "choice_c", "choice_d", "correct_choice", "explanation",
+]
+REQUIRED_COLUMNS = CBT_REQUIRED_COLUMNS
 
 
 @dataclass
@@ -46,28 +45,29 @@ def parse_int(value, default=None):
         return None
 
 
-def import_cbt_from_excel(uploaded_file, mode):
+def parse_excel_rows(uploaded_file, required_columns, title_column):
     try:
         from openpyxl import load_workbook
     except ImportError:
-        return CBTImportResult(errors=["Dependency openpyxl belum terpasang. Jalankan: pip install openpyxl"])
+        return [], CBTImportResult(errors=["Dependency openpyxl belum terpasang. Jalankan: pip install openpyxl"])
 
     try:
         workbook = load_workbook(uploaded_file, read_only=True, data_only=True)
     except Exception as exc:
-        return CBTImportResult(errors=[f"File Excel tidak bisa dibaca: {exc}"])
+        return [], CBTImportResult(errors=[f"File Excel tidak bisa dibaca: {exc}"])
 
     sheet = workbook.active
     rows = list(sheet.iter_rows(values_only=True))
     if not rows:
-        return CBTImportResult(errors=["File Excel kosong."])
+        return [], CBTImportResult(errors=["File Excel kosong."])
 
     headers = [normalize(value).lower() for value in rows[0]]
-    missing = [column for column in REQUIRED_COLUMNS if column not in headers]
+    missing = [column for column in required_columns if column not in headers]
     if missing:
-        return CBTImportResult(errors=["Kolom wajib belum ada: " + ", ".join(missing)])
+        return [], CBTImportResult(errors=["Kolom wajib belum ada: " + ", ".join(missing)])
 
-    index = {column: headers.index(column) for column in REQUIRED_COLUMNS}
+    index = {column: headers.index(column) for column in required_columns}
+    optional_index = {column: headers.index(column) for column in ["media_type", "media_url"] if column in headers}
     parsed_rows = []
     result = CBTImportResult()
 
@@ -79,23 +79,26 @@ def import_cbt_from_excel(uploaded_file, mode):
             position = index[column]
             return row[position] if position < len(row) else ""
 
-        cbt_title = normalize(value("cbt_title"))
-        cbt_description = normalize(value("cbt_description"))
+        def optional_value(column):
+            if column not in optional_index:
+                return ""
+            position = optional_index[column]
+            return row[position] if position < len(row) else ""
+
+        item_title = normalize(value(title_column))
+        item_description = normalize(value(required_columns[1]))
         passing_score = parse_int(value("passing_score"), 70)
         question_order = parse_int(value("question_order"), len(parsed_rows) + 1)
         question_text = normalize(value("question_text"))
-        choices = [
-            normalize(value("choice_a")),
-            normalize(value("choice_b")),
-            normalize(value("choice_c")),
-            normalize(value("choice_d")),
-        ]
+        choices = [normalize(value("choice_a")), normalize(value("choice_b")), normalize(value("choice_c")), normalize(value("choice_d"))]
+        media_type = normalize(optional_value("media_type")).lower() or "none"
+        media_url = normalize(optional_value("media_url"))
         correct_choice = normalize(value("correct_choice")).upper()
         explanation = normalize(value("explanation"))
 
         row_errors = []
-        if not cbt_title:
-            row_errors.append("cbt_title wajib diisi")
+        if not item_title:
+            row_errors.append(f"{title_column} wajib diisi")
         if passing_score is None or not 0 <= passing_score <= 100:
             row_errors.append("passing_score harus angka 0-100")
         if question_order is None or question_order < 1:
@@ -104,6 +107,10 @@ def import_cbt_from_excel(uploaded_file, mode):
             row_errors.append("question_text wajib diisi")
         if len([choice for choice in choices if choice]) < 2:
             row_errors.append("minimal 2 pilihan jawaban wajib diisi")
+        if media_type not in {"none", "image", "audio", "video", "youtube"}:
+            row_errors.append("media_type harus none, image, audio, video, atau youtube")
+        if media_type in {"image", "audio", "video", "youtube"} and not media_url:
+            row_errors.append("media_url wajib diisi jika media_type bukan none")
         if correct_choice not in {"A", "B", "C", "D"}:
             row_errors.append("correct_choice harus A, B, C, atau D")
         elif not choices[ord(correct_choice) - ord("A")]:
@@ -114,101 +121,88 @@ def import_cbt_from_excel(uploaded_file, mode):
             continue
 
         parsed_rows.append({
-            "cbt_title": cbt_title,
-            "cbt_description": cbt_description,
+            "title": item_title,
+            "description": item_description,
             "passing_score": passing_score,
             "question_order": question_order,
             "question_text": question_text,
+            "media_type": media_type,
+            "media_url": media_url,
             "choices": choices,
             "correct_choice": correct_choice,
             "explanation": explanation,
         })
 
     if result.errors:
-        return result
+        return [], result
     if not parsed_rows:
-        return CBTImportResult(errors=["Tidak ada baris soal yang bisa diimport."])
+        return [], CBTImportResult(errors=["Tidak ada baris soal yang bisa diimport."])
+    return parsed_rows, result
 
-    touched_cbt_ids = set()
+
+def save_imported_rows(rows, mode, parent_model, question_model, choice_model, relation_name):
+    result = CBTImportResult()
+    touched_ids = set()
     with transaction.atomic():
-        for item in parsed_rows:
-            cbt, created = CBT.objects.get_or_create(
-                title=item["cbt_title"],
-                defaults={
-                    "description": item["cbt_description"],
-                    "passing_score": item["passing_score"],
-                    "is_active": True,
-                },
+        for item in rows:
+            parent, created = parent_model.objects.get_or_create(
+                title=item["title"],
+                defaults={"description": item["description"], "passing_score": item["passing_score"], "is_active": True},
             )
             if created:
                 result.created_cbts += 1
             else:
-                result.updated_cbts += 1 if cbt.id not in touched_cbt_ids else 0
-                cbt.description = item["cbt_description"]
-                cbt.passing_score = item["passing_score"]
-                cbt.is_active = True
-                cbt.save(update_fields=["description", "passing_score", "is_active"])
+                result.updated_cbts += 1 if parent.id not in touched_ids else 0
+                parent.description = item["description"]
+                parent.passing_score = item["passing_score"]
+                parent.is_active = True
+                parent.save(update_fields=["description", "passing_score", "is_active"])
 
-            if mode == "replace" and cbt.id not in touched_cbt_ids:
-                cbt.questions.all().delete()
-            touched_cbt_ids.add(cbt.id)
+            if mode == "replace" and parent.id not in touched_ids:
+                getattr(parent, relation_name).all().delete()
+            touched_ids.add(parent.id)
 
-            question = Question.objects.create(
-                cbt=cbt,
-                text=item["question_text"],
-                explanation=item["explanation"],
-                order=item["question_order"],
-            )
+            question_kwargs = {
+                relation_name[:-1] if relation_name.endswith("s") else relation_name: parent,
+                "text": item["question_text"],
+                "explanation": item["explanation"],
+                "media_type": item["media_type"],
+                "media_url": item["media_url"],
+                "order": item["question_order"],
+            }
+            # Explicit relation names are clearer than clever singularization.
+            if parent_model is CBT:
+                question_kwargs = {"cbt": parent, **{k: v for k, v in question_kwargs.items() if k not in {"question"}}}
+            else:
+                question_kwargs = {"ubt": parent, **{k: v for k, v in question_kwargs.items() if k not in {"question"}}}
+            question = question_model.objects.create(**question_kwargs)
             result.created_questions += 1
 
             correct_index = ord(item["correct_choice"]) - ord("A")
             for index, choice_text in enumerate(item["choices"]):
                 if not choice_text:
                     continue
-                Choice.objects.create(
-                    question=question,
-                    text=choice_text,
-                    is_correct=index == correct_index,
-                )
+                choice_model.objects.create(question=question, text=choice_text, is_correct=index == correct_index)
                 result.created_choices += 1
-
     return result
 
 
-def build_cbt_import_template_xlsx():
-    from io import BytesIO
-    from zipfile import ZIP_DEFLATED, ZipFile
-    from xml.sax.saxutils import escape
+def import_cbt_from_excel(uploaded_file, mode):
+    rows, result = parse_excel_rows(uploaded_file, CBT_REQUIRED_COLUMNS, "cbt_title")
+    if result.errors:
+        return result
+    return save_imported_rows(rows, mode, CBT, Question, Choice, "questions")
 
-    rows = [
-        REQUIRED_COLUMNS,
-        [
-            "CBT Kosakata Korea",
-            "Latihan kosakata dasar Bahasa Korea",
-            "70",
-            "1",
-            "Apa arti sekolah?",
-            "Sekolah",
-            "Rumah",
-            "Pasar",
-            "Kantor",
-            "A",
-            "학교 berarti sekolah.",
-        ],
-        [
-            "CBT Kosakata Korea",
-            "Latihan kosakata dasar Bahasa Korea",
-            "70",
-            "2",
-            "Apa arti air?",
-            "Air",
-            "Buku",
-            "Makanan",
-            "Teman",
-            "A",
-            "물 berarti air.",
-        ],
-    ]
+
+def import_ubt_from_excel(uploaded_file, mode):
+    rows, result = parse_excel_rows(uploaded_file, UBT_REQUIRED_COLUMNS, "ubt_title")
+    if result.errors:
+        return result
+    return save_imported_rows(rows, mode, UBT, UBTQuestion, UBTChoice, "questions")
+
+
+def build_template_xlsx(headers, sample_rows, sheet_name):
+    rows = [headers, *sample_rows]
 
     def col_name(index):
         name = ""
@@ -226,35 +220,40 @@ def build_cbt_import_template_xlsx():
         cells = "".join(cell_xml(row_number, col_number, value) for col_number, value in enumerate(row, start=1))
         sheet_rows.append(f'<row r="{row_number}">{cells}</row>')
 
+    last_col = col_name(len(headers))
     sheet_xml = f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>
-  <dimension ref="A1:K{len(rows)}"/>
+  <dimension ref="A1:{last_col}{len(rows)}"/>
   <sheetData>{''.join(sheet_rows)}</sheetData>
 </worksheet>'''
 
     output = BytesIO()
     with ZipFile(output, "w", ZIP_DEFLATED) as archive:
         archive.writestr("[Content_Types].xml", '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-  <Default Extension="xml" ContentType="application/xml"/>
-  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
-  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
-</Types>''')
-        archive.writestr("_rels/.rels", '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
-</Relationships>''')
-        archive.writestr("xl/workbook.xml", '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-  <sheets><sheet name="Template CBT" sheetId="1" r:id="rId1"/></sheets>
-</workbook>''')
-        archive.writestr("xl/_rels/workbook.xml.rels", '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
-</Relationships>''')
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>''')
+        archive.writestr("_rels/.rels", '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>''')
+        archive.writestr("xl/workbook.xml", f'''<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="{escape(sheet_name)}" sheetId="1" r:id="rId1"/></sheets></workbook>''')
+        archive.writestr("xl/_rels/workbook.xml.rels", '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>''')
         archive.writestr("xl/worksheets/sheet1.xml", sheet_xml)
 
     output.seek(0)
     return output.getvalue()
+
+
+def build_cbt_import_template_xlsx():
+    headers = CBT_REQUIRED_COLUMNS[:5] + ["media_type", "media_url"] + CBT_REQUIRED_COLUMNS[5:]
+    samples = [
+        ["CBT Kosakata Korea", "Latihan kosakata dasar", "70", "1", "Apa arti sekolah?", "none", "", "Sekolah", "Rumah", "Pasar", "Kantor", "A", "hakgyo berarti sekolah."],
+        ["CBT Kosakata Korea", "Latihan kosakata dasar", "70", "2", "Apa arti air?", "audio", "https://example.com/audio/mul.mp3", "Air", "Buku", "Makanan", "Teman", "A", "mul berarti air."],
+    ]
+    return build_template_xlsx(headers, samples, "Template CBT")
+
+
+def build_ubt_import_template_xlsx():
+    headers = UBT_REQUIRED_COLUMNS[:5] + ["media_type", "media_url"] + UBT_REQUIRED_COLUMNS[5:]
+    samples = [
+        ["UBT Bahasa Korea Dasar", "Latihan UBT dasar", "70", "1", "Apa arti sekolah?", "none", "", "Sekolah", "Rumah", "Pasar", "Kantor", "A", "hakgyo berarti sekolah."],
+        ["UBT Bahasa Korea Dasar", "Latihan UBT dasar", "70", "2", "Apa arti air?", "audio", "https://example.com/audio/mul.mp3", "Air", "Buku", "Makanan", "Teman", "A", "mul berarti air."],
+    ]
+    return build_template_xlsx(headers, samples, "Template UBT")
