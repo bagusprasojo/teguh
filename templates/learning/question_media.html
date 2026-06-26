@@ -11,5 +11,12 @@
       <iframe class="h-full w-full" src="{{ question.youtube_embed_url }}" title="Media soal" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
     </div>
   {% endif %}
+  {% if question.media_type != "youtube" and question.media_source_url %}
+    <a class="mt-3 inline-flex text-sm font-bold text-rose-700" href="{{ question.media_source_url }}" target="_blank" rel="noopener">Buka media</a>
+  {% endif %}
+</div>
+{% elif question.media_file or question.media_url %}
+<div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm font-bold text-amber-800">
+  Media soal sudah diisi, tetapi tipe media belum dipilih. Edit soal dan pilih tipe media yang sesuai.
 </div>
 {% endif %}

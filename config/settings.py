@@ -1,4 +1,4 @@
-import os
+﻿import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -90,3 +90,12 @@ EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "noreply@koready.local")
 ADMIN_WHATSAPP_NUMBER = os.getenv("ADMIN_WHATSAPP_NUMBER", "6282247964226")
+WEASYPRINT_DLL_DIRECTORIES = [
+    path.strip()
+    for path in os.getenv(
+        "WEASYPRINT_DLL_DIRECTORIES",
+        r"C:\msys64\ucrt64\bin" if os.name == "nt" else "",
+    ).split(os.pathsep)
+    if path.strip()
+]
+

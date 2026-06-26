@@ -1,5 +1,45 @@
 ﻿{% extends "base.html" %}
 {% block title %}Hasil UBT - Koready{% endblock %}
 {% block content %}
-<section class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8"><div class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-zinc-200"><p class="text-sm font-bold text-rose-700">{{ attempt.ubt.title }}</p><h1 class="mt-2 text-4xl font-black">Skor {{ attempt.score }}</h1><p class="mt-2 text-zinc-600">Benar {{ attempt.correct_answers }} dari {{ attempt.total_questions }} soal. Status: <strong>{% if attempt.passed %}Lulus{% else %}Belum lulus{% endif %}</strong></p></div><div class="mt-6 space-y-4">{% for answer in answers %}<div class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-zinc-200"><p class="font-black">{{ forloop.counter }}. {{ answer.question.text|linebreaksbr }}</p>{% include "learning/question_media.html" with question=answer.question %}<p class="mt-3 text-sm">Jawaban kamu: <strong>{{ answer.selected_choice.text|default:"Tidak dijawab" }}</strong></p><p class="text-sm">Hasil: <strong>{% if answer.is_correct %}Benar{% else %}Salah{% endif %}</strong></p><div class="mt-3 rounded-md bg-zinc-50 p-3 text-sm"><p class="font-bold">Jawaban benar</p>{% for choice in answer.question.choices.all %}{% if choice.is_correct %}<p>{{ choice.text }}</p>{% endif %}{% endfor %}{% if answer.question.explanation %}<p class="mt-2 text-zinc-600">{{ answer.question.explanation|linebreaksbr }}</p>{% endif %}</div></div>{% endfor %}</div></section>
+<section class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+  <div class="rounded-lg bg-white p-6 shadow-sm ring-1 ring-zinc-200 preview-panel">
+    <p class="text-sm font-bold text-rose-700">{{ attempt.ubt.title }}</p>
+    <h1 class="mt-2 text-4xl font-black">Hasil UBT</h1>
+    <p class="mt-2 text-zinc-600">Dikerjakan pada {{ attempt.submitted_at|date:"d M Y H:i" }}</p>
+  </div>
+
+  <div class="mt-6 grid gap-4 sm:grid-cols-3">
+    <div class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-zinc-200 preview-panel">
+      <p class="text-sm font-bold text-zinc-600">Total Soal</p>
+      <p class="mt-2 text-4xl font-black text-rose-700">{{ attempt.total_questions }}</p>
+    </div>
+    <div class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-zinc-200 preview-panel">
+      <p class="text-sm font-bold text-zinc-600">Jawaban Benar</p>
+      <p class="mt-2 text-4xl font-black text-emerald-700">{{ attempt.correct_answers }}</p>
+    </div>
+    <div class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-zinc-200 preview-panel">
+      <p class="text-sm font-bold text-zinc-600">Jawaban Salah</p>
+      <p class="mt-2 text-4xl font-black text-red-700">{{ wrong_answers }}</p>
+    </div>
+  </div>
+
+  <div class="mt-6 rounded-lg bg-white p-6 shadow-sm ring-1 ring-zinc-200 preview-panel">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <p class="text-sm font-bold text-zinc-600">Skor</p>
+        <p class="mt-1 text-4xl font-black">{{ attempt.score }}</p>
+      </div>
+      <div class="rounded-md border border-zinc-200 px-4 py-3 text-sm font-black preview-card">
+        {% if attempt.passed %}Lulus{% else %}Belum lulus{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-6 flex flex-wrap gap-3">
+    <a class="btn-primary" href="{% url 'ubt_dashboard' %}">Kembali ke UBT</a>
+    {% if attempt.passed %}<a class="btn-primary" href="{% url 'ubt_attempt_certificate' attempt.uuid %}">Download Sertifikat</a>{% endif %}
+    <a class="btn-muted" href="{% url 'ubt_history' %}">Lihat History UBT</a>
+  </div>
+</section>
 {% endblock %}
+

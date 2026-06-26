@@ -1,0 +1,76 @@
+﻿<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Sertifikat {{ attempt.ubt.title }}</title>
+  <style>
+    @page { size: A4 landscape; margin: 0; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "DejaVu Sans", Arial, sans-serif; color: #18181b; background: #f8fafc; }
+    .certificate { position: relative; width: 297mm; height: 210mm; overflow: hidden; background: linear-gradient(135deg, #fff7ed 0%, #ffffff 35%, #eff6ff 70%, #fdf2f8 100%); padding: 17mm; }
+    .orb { position: absolute; border-radius: 999px; opacity: .28; filter: blur(2px); }
+    .orb.one { width: 95mm; height: 95mm; left: -28mm; top: -26mm; background: #fb7185; }
+    .orb.two { width: 110mm; height: 110mm; right: -36mm; bottom: -38mm; background: #38bdf8; }
+    .orb.three { width: 48mm; height: 48mm; right: 45mm; top: 12mm; background: #34d399; opacity: .20; }
+    .frame { position: relative; z-index: 1; height: 100%; border: 2.5mm solid #be123c; border-radius: 8mm; padding: 10mm 13mm; background: rgba(255,255,255,.84); }
+    .inner { height: 100%; border: .6mm solid rgba(190,18,60,.22); border-radius: 5mm; padding: 9mm 11mm; text-align: center; }
+    .brand { display: flex; justify-content: space-between; align-items: center; font-size: 11pt; font-weight: 800; color: #be123c; }
+    .brand strong { font-size: 18pt; letter-spacing: .5pt; }
+    .eyebrow { margin-top: 8mm; font-size: 10pt; font-weight: 800; letter-spacing: 4pt; color: #64748b; text-transform: uppercase; }
+    h1 { margin: 3mm 0 0; font-size: 28pt; line-height: 1; color: #0f172a; }
+    .intro { margin-top: 8mm; font-size: 13pt; color: #475569; }
+    .name { margin: 5mm auto 0; max-width: 190mm; padding-bottom: 2mm; border-bottom: .7mm solid #f59e0b; font-family: Georgia, "Times New Roman", serif; font-size: 24pt; line-height: 1.15; font-weight: 700; color: #be123c; }
+    .description { margin: 7mm auto 0; max-width: 215mm; font-size: 14pt; line-height: 1.55; color: #334155; }
+    .ubt-title { font-weight: 800; color: #0f172a; }
+    .stats { display: table; width: 178mm; margin: 8mm auto 0; border-collapse: separate; border-spacing: 3mm 0; }
+    .stat { display: table-cell; width: 33%; border-radius: 4mm; padding: 4mm; background: linear-gradient(135deg, #be123c, #f97316); color: white; }
+    .stat:nth-child(2) { background: linear-gradient(135deg, #2563eb, #06b6d4); }
+    .stat:nth-child(3) { background: linear-gradient(135deg, #059669, #84cc16); }
+    .stat span { display: block; font-size: 8pt; font-weight: 800; text-transform: uppercase; opacity: .82; }
+    .stat strong { display: block; margin-top: 1mm; font-size: 18pt; }
+    .footer { display: flex; justify-content: space-between; align-items: end; margin-top: 10mm; text-align: left; color: #475569; font-size: 9pt; }
+    .signature { text-align: center; min-width: 62mm; }
+    .signature .line { margin: 11mm auto 2mm; width: 55mm; border-top: .5mm solid #0f172a; }
+    .signature strong { color: #0f172a; }
+    .cert-no { max-width: 112mm; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <main class="certificate">
+    <div class="orb one"></div>
+    <div class="orb two"></div>
+    <div class="orb three"></div>
+    <section class="frame">
+      <div class="inner">
+        <div class="brand"><strong>Koready</strong><span>Belajar Bahasa Korea</span></div>
+        <div class="eyebrow">Certificate of Achievement</div>
+        <h1>Sertifikat Kelulusan</h1>
+        <p class="intro">Diberikan kepada</p>
+        <div class="name">{{ display_name }}</div>
+        <p class="description">
+          Telah menyelesaikan dan lulus <span class="ubt-title">{{ attempt.ubt.title }}</span>
+          pada platform Koready.
+        </p>
+        <div class="stats">
+          <div class="stat"><span>Skor</span><strong>{{ attempt.score }}</strong></div>
+          <div class="stat"><span>Benar</span><strong>{{ attempt.correct_answers }}/{{ attempt.total_questions }}</strong></div>
+          <div class="stat"><span>Tanggal</span><strong>{{ attempt.submitted_at|date:"d M Y" }}</strong></div>
+        </div>
+        <div class="footer">
+          <div class="cert-no">
+            <strong>No. Sertifikat</strong><br>
+            KRD-UBT-{{ attempt.uuid }}<br>
+            Dokumen ini diterbitkan otomatis oleh sistem Koready.
+          </div>
+          <div class="signature">
+            <div class="line"></div>
+            <strong>Koready</strong><br>
+            Academic Team
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
+

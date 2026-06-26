@@ -320,6 +320,7 @@ class UBT(models.Model):
     title = models.CharField(max_length=180)
     description = models.TextField(blank=True)
     passing_score = models.PositiveIntegerField(default=70)
+    duration_minutes = models.PositiveIntegerField(default=60)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -454,6 +455,8 @@ class UBTRegistration(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.package.name}"
+
+
 
 
 

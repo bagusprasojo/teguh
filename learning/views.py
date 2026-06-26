@@ -1,4 +1,5 @@
-﻿import secrets
+﻿import os
+import secrets
 
 from django.conf import settings
 from django.contrib import messages
@@ -9,7 +10,9 @@ from django.contrib.auth.views import LoginView
 from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 
 from .importers import build_cbt_import_template_xlsx, build_ubt_import_template_xlsx, import_cbt_from_excel, import_ubt_from_excel
 from .forms import CBTForm, CBTImportForm, QuestionForm, RegisterForm, UBTForm, UBTImportForm, UBTPackageForm, UBTQuestionForm, UBTRegistrationForm, UBTRegistrationStatusForm, UserPhotoForm, UserPreferenceForm, UserProfileForm, VideoForm, VoucherForm, VoucherRedeemForm
@@ -18,6 +21,12 @@ from .models import CBT, CBTAttempt, CBTAttemptAnswer, Choice, Question, UBT, UB
 
 
 BRAND_NAME = "Koready"
+def prepare_weasyprint_environment():
+    if not hasattr(os, "add_dll_directory"):
+        return
+    for directory in getattr(settings, "WEASYPRINT_DLL_DIRECTORIES", []):
+        if os.path.isdir(directory):
+            os.add_dll_directory(directory)
 
 
 
@@ -256,7 +265,19 @@ def ubt_take(request, uuid):
         return redirect("ubt_dashboard")
     ubt = get_object_or_404(UBT.objects.prefetch_related("questions__choices"), uuid=uuid, is_active=True)
     questions = list(ubt.questions.all())
+    session_key = f"ubt_started_at_{ubt.uuid}"
+    now = timezone.now()
+    started_at_raw = request.session.get(session_key)
+    started_at = parse_datetime(started_at_raw) if started_at_raw else None
+    if not started_at:
+        started_at = now
+        request.session[session_key] = started_at.isoformat()
+    deadline = started_at + timezone.timedelta(minutes=ubt.duration_minutes)
+    remaining_seconds = max(0, int((deadline - now).total_seconds()))
+
     if request.method == "POST":
+        submitted_at = timezone.now()
+        is_late = submitted_at > deadline
         attempt = UBTAttempt.objects.create(user=request.user, ubt=ubt, total_questions=len(questions))
         correct = 0
         for question in questions:
@@ -267,11 +288,18 @@ def ubt_take(request, uuid):
             UBTAttemptAnswer.objects.create(attempt=attempt, question=question, selected_choice=selected, is_correct=is_correct)
         attempt.correct_answers = correct
         attempt.score = round((correct / len(questions)) * 100) if questions else 0
-        attempt.submitted_at = timezone.now()
+        attempt.submitted_at = submitted_at
         attempt.save(update_fields=["correct_answers", "score", "submitted_at"])
+        request.session.pop(session_key, None)
+        if is_late:
+            messages.warning(request, "Waktu pengerjaan UBT sudah habis. Jawaban yang terkirim tetap diproses.")
         return redirect("ubt_attempt_detail", uuid=attempt.uuid)
-    return render(request, "learning/ubt/take.html", {"ubt": ubt, "questions": questions})
-
+    return render(request, "learning/ubt/take.html", {
+        "ubt": ubt,
+        "questions": questions,
+        "remaining_seconds": remaining_seconds,
+        "duration_minutes": ubt.duration_minutes,
+    })
 
 @login_required
 def ubt_history(request):
@@ -283,8 +311,38 @@ def ubt_history(request):
 def ubt_attempt_detail(request, uuid):
     attempt = get_object_or_404(UBTAttempt.objects.select_related("ubt"), uuid=uuid, user=request.user)
     answers = attempt.answers.select_related("question", "selected_choice").prefetch_related("question__choices")
-    return render(request, "learning/ubt/attempt_detail.html", {"attempt": attempt, "answers": answers})
+    return render(request, "learning/ubt/attempt_detail.html", {"attempt": attempt, "answers": answers, "wrong_answers": max(attempt.total_questions - attempt.correct_answers, 0)})
 
+
+
+@login_required
+def ubt_attempt_certificate(request, uuid):
+    attempt = get_object_or_404(UBTAttempt.objects.select_related("ubt", "user"), uuid=uuid, user=request.user)
+    if not attempt.passed:
+        messages.warning(request, "Sertifikat hanya tersedia untuk hasil UBT yang lulus.")
+        return redirect("ubt_attempt_detail", uuid=attempt.uuid)
+    try:
+        prepare_weasyprint_environment()
+        from weasyprint import HTML
+    except Exception:
+        messages.error(request, "WeasyPrint belum siap di environment ini. Install dependency Python dan library sistem WeasyPrint terlebih dahulu.")
+        return redirect("ubt_attempt_detail", uuid=attempt.uuid)
+
+    display_name = attempt.user.get_full_name().strip() or attempt.user.username
+    html = render_to_string("learning/ubt/certificate.html", {
+        "attempt": attempt,
+        "display_name": display_name,
+    })
+    try:
+        pdf_bytes = HTML(string=html, base_url=request.build_absolute_uri("/")).write_pdf()
+    except Exception:
+        messages.error(request, "Sertifikat PDF belum bisa dibuat. Periksa instalasi dependency sistem WeasyPrint di environment ini.")
+        return redirect("ubt_attempt_detail", uuid=attempt.uuid)
+
+    filename = f"sertifikat-koready-{attempt.uuid}.pdf"
+    response = HttpResponse(pdf_bytes, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
 
 @login_required
 def video_list(request):
@@ -568,6 +626,11 @@ def admin_ubt_registration_detail(request, uuid):
             messages.success(request, "Status pendaftaran UBT berhasil diperbarui.")
         return redirect("admin_ubt_registration_detail", uuid=registration.uuid)
     return render(request, "learning/admin/ubt_registration_detail.html", {"registration": registration, "form": form})
+
+
+
+
+
 
 
 

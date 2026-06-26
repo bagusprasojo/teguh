@@ -174,11 +174,12 @@ class UBTPackageForm(forms.ModelForm):
 class UBTForm(forms.ModelForm):
     class Meta:
         model = UBT
-        fields = ["title", "description", "passing_score", "is_active"]
+        fields = ["title", "description", "passing_score", "duration_minutes", "is_active"]
         labels = {
             "title": "Judul UBT",
             "description": "Deskripsi",
             "passing_score": "Nilai kelulusan",
+            "duration_minutes": "Durasi pengerjaan (menit)",
             "is_active": "Aktif",
         }
 
@@ -285,5 +286,9 @@ class UBTImportForm(forms.Form):
         if not uploaded.name.lower().endswith(".xlsx"):
             raise forms.ValidationError("File harus berformat .xlsx.")
         return uploaded
+
+
+
+
 
 
