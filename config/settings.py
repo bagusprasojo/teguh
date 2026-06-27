@@ -17,6 +17,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_ckeditor_5",
     "learning",
 ]
 
@@ -99,3 +100,19 @@ WEASYPRINT_DLL_DIRECTORIES = [
     if path.strip()
 ]
 
+
+CKEDITOR_5_UPLOAD_PATH = "blog/uploads/"
+CKEDITOR_5_CONFIGS = {
+    "default": {
+        "toolbar": [
+            "heading", "|", "bold", "italic", "link", "bulletedList", "numberedList",
+            "blockQuote", "insertTable", "imageUpload", "mediaEmbed", "undo", "redo",
+        ],
+        "image": {
+            "toolbar": ["imageTextAlternative", "imageStyle:full", "imageStyle:side"],
+        },
+        "table": {
+            "contentToolbar": ["tableColumn", "tableRow", "mergeTableCells"],
+        },
+    }
+}

@@ -1,8 +1,9 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% block content %}
 <section class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-  <div class="mb-6 flex flex-wrap items-center justify-between gap-3"><h1 class="text-3xl font-black">Admin Koready</h1><div class="flex flex-wrap gap-2"><a class="btn-muted" href="{% url 'admin_video_list' %}">Video</a><a class="btn-muted" href="{% url 'admin_voucher_list' %}">Voucher</a><a class="btn-muted" href="{% url 'admin_cbt_list' %}">CBT</a><a class="btn-muted" href="{% url 'admin_user_list' %}">User</a><a class="btn-muted" href="{% url 'admin_attempt_list' %}">Hasil</a><a class="btn-muted" href="{% url 'admin_ubt_package_list' %}">Paket UBT</a><a class="btn-muted" href="{% url 'admin_ubt_registration_list' %}">Pendaftaran UBT</a><a class="btn-muted" href="{% url 'admin_ubt_list' %}">UBT</a></div></div>
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-3"><h1 class="text-3xl font-black">Admin Koready</h1><div class="flex flex-wrap gap-2"><a class="btn-muted" href="{% url 'admin_video_list' %}">Video</a><a class="btn-muted" href="{% url 'admin_voucher_list' %}">Voucher</a><a class="btn-muted" href="{% url 'admin_cbt_list' %}">CBT</a><a class="btn-muted" href="{% url 'admin_blog_post_list' %}">Blog</a><a class="btn-muted" href="{% url 'admin_user_list' %}">User</a><a class="btn-muted" href="{% url 'admin_attempt_list' %}">Hasil</a><a class="btn-muted" href="{% url 'admin_ubt_package_list' %}">Paket UBT</a><a class="btn-muted" href="{% url 'admin_ubt_registration_list' %}">Pendaftaran UBT</a><a class="btn-muted" href="{% url 'admin_ubt_list' %}">UBT</a></div></div>
   {% block admin_content %}{% endblock %}
 </section>
 {% endblock %}
+
 

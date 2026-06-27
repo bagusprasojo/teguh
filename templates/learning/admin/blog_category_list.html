@@ -1,0 +1,5 @@
+﻿{% extends "learning/admin/base_admin.html" %}
+{% block admin_content %}
+<div class="mb-4 flex flex-wrap gap-2"><a class="btn-primary" href="{% url 'admin_blog_category_new' %}">Tambah Kategori</a><a class="btn-muted" href="{% url 'admin_blog_post_list' %}">Artikel Blog</a></div>
+<div class="table-card"><table><thead><tr><th>Nama</th><th>Slug</th><th>Aksi</th></tr></thead><tbody>{% for category in categories %}<tr><td class="font-bold">{{ category.name }}</td><td>{{ category.slug }}</td><td><a class="btn-muted" href="{% url 'admin_blog_category_edit' category.uuid %}">Edit</a></td></tr>{% empty %}<tr><td colspan="3">Belum ada kategori.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

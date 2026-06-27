@@ -2,8 +2,46 @@
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
-from .models import CBT, Choice, Question, UBT, UBTChoice, UBTPackage, UBTQuestion, UBTRegistration, UserPreference, UserProfile, Video, Voucher
+from .models import BlogCategory, BlogPost, CBT, Choice, Question, UBT, UBTChoice, UBTPackage, UBTQuestion, UBTRegistration, UserPreference, UserProfile, Video, Voucher
 
+
+
+class BlogCategoryForm(forms.ModelForm):
+    class Meta:
+        model = BlogCategory
+        fields = ["name", "slug"]
+        labels = {
+            "name": "Nama kategori",
+            "slug": "Slug",
+        }
+        help_texts = {
+            "slug": "Kosongkan untuk dibuat otomatis dari nama kategori.",
+        }
+
+
+class BlogPostForm(forms.ModelForm):
+    class Meta:
+        model = BlogPost
+        fields = ["title", "slug", "category", "excerpt", "content", "cover", "status", "published_at"]
+        labels = {
+            "title": "Judul",
+            "slug": "Slug",
+            "category": "Kategori",
+            "excerpt": "Ringkasan",
+            "content": "Konten",
+            "cover": "Cover",
+            "status": "Status",
+            "published_at": "Tanggal publish",
+        }
+        help_texts = {
+            "slug": "Kosongkan untuk dibuat otomatis dari judul artikel.",
+            "published_at": "Kosongkan agar otomatis diisi saat status Published.",
+            "excerpt": "Opsional. Jika dikosongkan, ringkasan otomatis diambil dari teks awal konten artikel.",
+            "cover": "Opsional. Jika dikosongkan, sistem memakai gambar pertama dari konten artikel untuk tampilan list/landing page.",
+        }
+        widgets = {
+            "published_at": forms.DateTimeInput(attrs={"type": "datetime-local"}),
+        }
 
 class RegisterForm(UserCreationForm):
     email = forms.EmailField(required=True, label="Email")
@@ -286,6 +324,8 @@ class UBTImportForm(forms.Form):
         if not uploaded.name.lower().endswith(".xlsx"):
             raise forms.ValidationError("File harus berformat .xlsx.")
         return uploaded
+
+
 
 
 

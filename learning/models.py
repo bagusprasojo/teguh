@@ -1,11 +1,143 @@
 ﻿import uuid
+from html.parser import HTMLParser
 from urllib.parse import parse_qs, urlparse
 
 from django.conf import settings
 from django.db import models
+from django_ckeditor_5.fields import CKEditor5Field
 from django.utils import timezone
+from django.utils.text import slugify
 
 
+
+
+
+class BlogContentParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.first_image_url = ""
+        self.text_parts = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag != "img" or self.first_image_url:
+            return
+        attrs_dict = dict(attrs)
+        self.first_image_url = attrs_dict.get("src", "")
+
+    def handle_data(self, data):
+        text = data.strip()
+        if text:
+            self.text_parts.append(text)
+
+
+def parse_blog_content(content):
+    parser = BlogContentParser()
+    parser.feed(content or "")
+    return parser.first_image_url, " ".join(parser.text_parts)
+
+def make_unique_slug(model_class, value):
+    base_slug = slugify(value) or uuid.uuid4().hex[:8]
+    slug = base_slug
+    counter = 2
+    while model_class.objects.filter(slug=slug).exists():
+        slug = f"{base_slug}-{counter}"
+        counter += 1
+    return slug
+class BlogCategory(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    name = models.CharField(max_length=120, unique=True)
+    slug = models.SlugField(max_length=140, unique=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = "Blog category"
+        verbose_name_plural = "Blog categories"
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = make_unique_slug(BlogCategory, self.name)
+        super().save(*args, **kwargs)
+
+
+class BlogPost(models.Model):
+    STATUS_DRAFT = "draft"
+    STATUS_PUBLISHED = "published"
+    STATUS_CHOICES = [
+        (STATUS_DRAFT, "Draft"),
+        (STATUS_PUBLISHED, "Published"),
+    ]
+
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    title = models.CharField(max_length=180)
+    slug = models.SlugField(max_length=220, unique=True, blank=True)
+    category = models.ForeignKey(BlogCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name="posts")
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="blog_posts")
+    excerpt = models.TextField(max_length=320, blank=True)
+    content = CKEditor5Field("Konten", config_name="default")
+    cover = models.ImageField(upload_to="blog-covers/", blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_DRAFT)
+    published_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-published_at", "-created_at"]
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def first_content_image_url(self):
+        image_url, _ = parse_blog_content(self.content)
+        return image_url
+
+    @property
+    def cover_url(self):
+        if self.cover:
+            return self.cover.url
+        return self.first_content_image_url
+
+    @property
+    def excerpt_text(self):
+        if self.excerpt:
+            return self.excerpt
+        _, text = parse_blog_content(self.content)
+        return text[:220]
+
+    @property
+    def read_count(self):
+        return self.reads.count()
+    @property
+    def is_published(self):
+        return self.status == self.STATUS_PUBLISHED and bool(self.published_at and self.published_at <= timezone.now())
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = make_unique_slug(BlogPost, self.title)
+        if self.status == self.STATUS_PUBLISHED and not self.published_at:
+            self.published_at = timezone.now()
+        super().save(*args, **kwargs)
+
+
+class BlogPostRead(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    post = models.ForeignKey(BlogPost, on_delete=models.CASCADE, related_name="reads")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="blog_reads")
+    session_key = models.CharField(max_length=40)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["post", "session_key"], name="unique_blog_read_per_session"),
+        ]
+
+    def __str__(self):
+        return f"{self.post.title} read"
 
 class LandingPageVisit(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
@@ -455,6 +587,10 @@ class UBTRegistration(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.package.name}"
+
+
+
+
 
 
 

@@ -15,9 +15,9 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from .importers import build_cbt_import_template_xlsx, build_ubt_import_template_xlsx, import_cbt_from_excel, import_ubt_from_excel
-from .forms import CBTForm, CBTImportForm, QuestionForm, RegisterForm, UBTForm, UBTImportForm, UBTPackageForm, UBTQuestionForm, UBTRegistrationForm, UBTRegistrationStatusForm, UserPhotoForm, UserPreferenceForm, UserProfileForm, VideoForm, VoucherForm, VoucherRedeemForm
+from .forms import BlogCategoryForm, BlogPostForm, CBTForm, CBTImportForm, QuestionForm, RegisterForm, UBTForm, UBTImportForm, UBTPackageForm, UBTQuestionForm, UBTRegistrationForm, UBTRegistrationStatusForm, UserPhotoForm, UserPreferenceForm, UserProfileForm, VideoForm, VoucherForm, VoucherRedeemForm
 from .emails import send_ubt_payment_email, send_ubt_voucher_email
-from .models import CBT, CBTAttempt, CBTAttemptAnswer, Choice, Question, UBT, UBTAttempt, UBTAttemptAnswer, UBTChoice, UBTPackage, UBTQuestion, UBTRegistration, LandingPageVisit, UserAccess, UserUBTAccess, UserPreference, UserProfile, Video, Voucher
+from .models import BlogCategory, BlogPost, BlogPostRead, CBT, CBTAttempt, CBTAttemptAnswer, Choice, Question, UBT, UBTAttempt, UBTAttemptAnswer, UBTChoice, UBTPackage, UBTQuestion, UBTRegistration, LandingPageVisit, UserAccess, UserUBTAccess, UserPreference, UserProfile, Video, Voucher
 
 
 BRAND_NAME = "Koready"
@@ -76,7 +76,40 @@ def home(request):
         "video_count": Video.objects.filter(is_active=True).count(),
         "cbt_count": CBT.objects.filter(is_active=True).count(),
         "user_count": User.objects.filter(is_staff=False).count(),
+        "latest_posts": BlogPost.objects.filter(status=BlogPost.STATUS_PUBLISHED, published_at__lte=timezone.now()).select_related("category")[:3],
     })
+
+
+def published_blog_posts():
+    return BlogPost.objects.filter(status=BlogPost.STATUS_PUBLISHED, published_at__lte=timezone.now()).select_related("category", "author")
+
+
+def blog_list(request):
+    posts = published_blog_posts()
+    categories = BlogCategory.objects.filter(posts__in=posts).distinct()
+    category_slug = request.GET.get("category")
+    active_category = None
+    if category_slug:
+        active_category = get_object_or_404(BlogCategory, slug=category_slug)
+        posts = posts.filter(category=active_category)
+    return render(request, "learning/blog/list.html", {
+        "posts": posts,
+        "categories": categories,
+        "active_category": active_category,
+    })
+
+
+def blog_detail(request, slug):
+    post = get_object_or_404(published_blog_posts(), slug=slug)
+    if not request.session.session_key:
+        request.session.create()
+    BlogPostRead.objects.get_or_create(
+        post=post,
+        session_key=request.session.session_key,
+        defaults={"user": request.user if request.user.is_authenticated else None},
+    )
+    latest_posts = published_blog_posts().exclude(pk=post.pk)[:3]
+    return render(request, "learning/blog/detail.html", {"post": post, "latest_posts": latest_posts})
 
 def register(request):
     if request.user.is_authenticated:
@@ -403,6 +436,44 @@ def attempt_detail(request, uuid):
     return render(request, "learning/attempt_detail.html", {"attempt": attempt, "answers": answers})
 
 
+
+@admin_required
+def admin_blog_post_list(request):
+    posts = BlogPost.objects.select_related("category", "author").prefetch_related("reads")
+    return render(request, "learning/admin/blog_post_list.html", {"posts": posts})
+
+
+@admin_required
+def admin_blog_post_form(request, uuid=None):
+    post = get_object_or_404(BlogPost, uuid=uuid) if uuid else None
+    form = BlogPostForm(request.POST or None, request.FILES or None, instance=post)
+    if request.method == "POST" and form.is_valid():
+        post = form.save(commit=False)
+        if not post.author_id:
+            post.author = request.user
+        post.save()
+        form.save_m2m()
+        messages.success(request, "Artikel blog berhasil disimpan.")
+        return redirect("admin_blog_post_list")
+    return render(request, "learning/admin/blog_post_form.html", {"form": form, "title": "Artikel Blog"})
+
+
+@admin_required
+def admin_blog_category_list(request):
+    categories = BlogCategory.objects.all()
+    return render(request, "learning/admin/blog_category_list.html", {"categories": categories})
+
+
+@admin_required
+def admin_blog_category_form(request, uuid=None):
+    category = get_object_or_404(BlogCategory, uuid=uuid) if uuid else None
+    form = BlogCategoryForm(request.POST or None, instance=category)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Kategori blog berhasil disimpan.")
+        return redirect("admin_blog_category_list")
+    return render(request, "learning/admin/model_form.html", {"form": form, "title": "Kategori Blog", "back_url": "admin_blog_category_list"})
+
 @admin_required
 def admin_dashboard(request):
     return render(request, "learning/admin/dashboard.html", {
@@ -410,6 +481,7 @@ def admin_dashboard(request):
         "cbt_count": CBT.objects.count(),
         "voucher_count": Voucher.objects.count(),
         "user_count": User.objects.filter(is_staff=False).count(),
+        "latest_posts": BlogPost.objects.filter(status=BlogPost.STATUS_PUBLISHED, published_at__lte=timezone.now()).select_related("category")[:3],
         "recent_attempts": CBTAttempt.objects.select_related("user", "cbt")[:8],
     })
 
@@ -626,6 +698,8 @@ def admin_ubt_registration_detail(request, uuid):
             messages.success(request, "Status pendaftaran UBT berhasil diperbarui.")
         return redirect("admin_ubt_registration_detail", uuid=registration.uuid)
     return render(request, "learning/admin/ubt_registration_detail.html", {"registration": registration, "form": form})
+
+
 
 
 

@@ -1,7 +1,10 @@
 ﻿from django.contrib import admin
 
-from .models import CBT, CBTAttempt, CBTAttemptAnswer, Choice, Question, UBT, UBTAttempt, UBTAttemptAnswer, UBTChoice, UBTPackage, UBTQuestion, UBTRegistration, LandingPageVisit, UserAccess, UserUBTAccess, UserPreference, UserProfile, Video, Voucher
+from .models import BlogCategory, BlogPost, BlogPostRead, CBT, CBTAttempt, CBTAttemptAnswer, Choice, Question, UBT, UBTAttempt, UBTAttemptAnswer, UBTChoice, UBTPackage, UBTQuestion, UBTRegistration, LandingPageVisit, UserAccess, UserUBTAccess, UserPreference, UserProfile, Video, Voucher
 
+admin.site.register(BlogCategory)
+admin.site.register(BlogPost)
+admin.site.register(BlogPostRead)
 admin.site.register(LandingPageVisit)
 admin.site.register(UserAccess)
 admin.site.register(UserPreference)
@@ -22,5 +25,7 @@ admin.site.register(UBTQuestion)
 admin.site.register(UBTChoice)
 admin.site.register(UBTAttempt)
 admin.site.register(UBTAttemptAnswer)
+
+
 
 

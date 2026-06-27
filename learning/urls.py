@@ -8,6 +8,8 @@ urlpatterns = [
     path("register/", views.register, name="register"),
     path("login/", views.UserLoginView.as_view(), name="login"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
+    path("blog/", views.blog_list, name="blog_list"),
+    path("blog/<slug:slug>/", views.blog_detail, name="blog_detail"),
     path("dashboard/", views.dashboard, name="dashboard"),
     path("profile/", views.profile, name="profile"),
     path("voucher/", views.redeem_voucher, name="redeem_voucher"),
@@ -26,6 +28,12 @@ urlpatterns = [
     path("history/", views.history, name="history"),
     path("history/<uuid:uuid>/", views.attempt_detail, name="attempt_detail"),
     path("manage/", views.admin_dashboard, name="admin_dashboard"),
+    path("manage/blog/", views.admin_blog_post_list, name="admin_blog_post_list"),
+    path("manage/blog/new/", views.admin_blog_post_form, name="admin_blog_post_new"),
+    path("manage/blog/<uuid:uuid>/edit/", views.admin_blog_post_form, name="admin_blog_post_edit"),
+    path("manage/blog/categories/", views.admin_blog_category_list, name="admin_blog_category_list"),
+    path("manage/blog/categories/new/", views.admin_blog_category_form, name="admin_blog_category_new"),
+    path("manage/blog/categories/<uuid:uuid>/edit/", views.admin_blog_category_form, name="admin_blog_category_edit"),
     path("manage/videos/", views.admin_video_list, name="admin_video_list"),
     path("manage/videos/new/", views.admin_video_form, name="admin_video_new"),
     path("manage/videos/<uuid:uuid>/edit/", views.admin_video_form, name="admin_video_edit"),
@@ -54,6 +62,7 @@ urlpatterns = [
     path("manage/ubt/registrations/", views.admin_ubt_registration_list, name="admin_ubt_registration_list"),
     path("manage/ubt/registrations/<uuid:uuid>/", views.admin_ubt_registration_detail, name="admin_ubt_registration_detail"),
 ]
+
 
 
 
