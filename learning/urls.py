@@ -21,6 +21,7 @@ urlpatterns = [
     path("ubt/history/", views.ubt_history, name="ubt_history"),
     path("ubt/history/<uuid:uuid>/", views.ubt_attempt_detail, name="ubt_attempt_detail"),
     path("ubt/history/<uuid:uuid>/certificate/", views.ubt_attempt_certificate, name="ubt_attempt_certificate"),
+    path("certificates/ubt/<uuid:uuid>/", views.ubt_certificate_verify, name="ubt_certificate_verify"),
     path("videos/", views.video_list, name="video_list"),
     path("videos/<uuid:uuid>/", views.video_detail, name="video_detail"),
     path("cbt/", views.cbt_list, name="cbt_list"),
@@ -62,6 +63,7 @@ urlpatterns = [
     path("manage/ubt/registrations/", views.admin_ubt_registration_list, name="admin_ubt_registration_list"),
     path("manage/ubt/registrations/<uuid:uuid>/", views.admin_ubt_registration_detail, name="admin_ubt_registration_detail"),
 ]
+
 
 
 

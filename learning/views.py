@@ -1,5 +1,7 @@
-﻿import os
+﻿import base64
+import os
 import secrets
+from io import BytesIO
 
 from django.conf import settings
 from django.contrib import messages
@@ -8,9 +10,10 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
@@ -21,6 +24,20 @@ from .models import BlogCategory, BlogPost, BlogPostRead, CBT, CBTAttempt, CBTAt
 
 
 BRAND_NAME = "Koready"
+
+def build_certificate_number(attempt):
+    return f"KRD-UBT-{attempt.uuid}"
+
+
+def build_qr_code_data_uri(value):
+    import qrcode
+
+    image = qrcode.make(value)
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+    encoded = base64.b64encode(buffer.getvalue()).decode("ascii")
+    return f"data:image/png;base64,{encoded}"
+
 def prepare_weasyprint_environment():
     if not hasattr(os, "add_dll_directory"):
         return
@@ -362,9 +379,13 @@ def ubt_attempt_certificate(request, uuid):
         return redirect("ubt_attempt_detail", uuid=attempt.uuid)
 
     display_name = attempt.user.get_full_name().strip() or attempt.user.username
+    verification_url = request.build_absolute_uri(reverse("ubt_certificate_verify", kwargs={"uuid": attempt.uuid}))
     html = render_to_string("learning/ubt/certificate.html", {
         "attempt": attempt,
         "display_name": display_name,
+        "certificate_number": build_certificate_number(attempt),
+        "verification_url": verification_url,
+        "qr_code_data_uri": build_qr_code_data_uri(verification_url),
     })
     try:
         pdf_bytes = HTML(string=html, base_url=request.build_absolute_uri("/")).write_pdf()
@@ -376,6 +397,18 @@ def ubt_attempt_certificate(request, uuid):
     response = HttpResponse(pdf_bytes, content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
+
+
+def ubt_certificate_verify(request, uuid):
+    attempt = get_object_or_404(UBTAttempt.objects.select_related("ubt", "user"), uuid=uuid, submitted_at__isnull=False)
+    if not attempt.passed:
+        raise Http404("Sertifikat tidak ditemukan.")
+    display_name = attempt.user.get_full_name().strip() or attempt.user.username
+    return render(request, "learning/ubt/certificate_verify.html", {
+        "attempt": attempt,
+        "display_name": display_name,
+        "certificate_number": build_certificate_number(attempt),
+    })
 
 @login_required
 def video_list(request):
@@ -698,6 +731,8 @@ def admin_ubt_registration_detail(request, uuid):
             messages.success(request, "Status pendaftaran UBT berhasil diperbarui.")
         return redirect("admin_ubt_registration_detail", uuid=registration.uuid)
     return render(request, "learning/admin/ubt_registration_detail.html", {"registration": registration, "form": form})
+
+
 
 
 

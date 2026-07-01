@@ -1,0 +1,42 @@
+﻿{% extends "base.html" %}
+{% block title %}Verifikasi Sertifikat - Koready{% endblock %}
+{% block content %}
+<section class="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
+  <div class="rounded-lg bg-white p-8 shadow-sm ring-1 ring-zinc-200 preview-panel">
+    <p class="text-sm font-bold text-rose-700">Verifikasi Sertifikat Koready</p>
+    <h1 class="mt-2 text-4xl font-black">Sertifikat Valid</h1>
+    <p class="mt-3 text-zinc-600">Sertifikat ini diterbitkan oleh Koready dan tercatat valid di sistem.</p>
+  </div>
+
+  <div class="mt-6 grid gap-4 sm:grid-cols-2">
+    <div class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-zinc-200 preview-panel">
+      <p class="text-sm font-bold text-zinc-600">Nama Peserta</p>
+      <p class="mt-2 text-2xl font-black">{{ display_name }}</p>
+    </div>
+    <div class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-zinc-200 preview-panel">
+      <p class="text-sm font-bold text-zinc-600">Nomor Sertifikat</p>
+      <p class="mt-2 break-all text-lg font-black">{{ certificate_number }}</p>
+    </div>
+    <div class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-zinc-200 preview-panel">
+      <p class="text-sm font-bold text-zinc-600">UBT</p>
+      <p class="mt-2 text-2xl font-black">{{ attempt.ubt.title }}</p>
+    </div>
+    <div class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-zinc-200 preview-panel">
+      <p class="text-sm font-bold text-zinc-600">Tanggal Lulus</p>
+      <p class="mt-2 text-2xl font-black">{{ attempt.submitted_at|date:"d M Y H:i" }}</p>
+    </div>
+    <div class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-zinc-200 preview-panel">
+      <p class="text-sm font-bold text-zinc-600">Skor</p>
+      <p class="mt-2 text-4xl font-black text-rose-700">{{ attempt.score }}</p>
+    </div>
+    <div class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-zinc-200 preview-panel">
+      <p class="text-sm font-bold text-zinc-600">Jawaban Benar</p>
+      <p class="mt-2 text-4xl font-black text-emerald-700">{{ attempt.correct_answers }}/{{ attempt.total_questions }}</p>
+    </div>
+  </div>
+
+  <div class="mt-6 rounded-lg bg-emerald-50 p-5 text-sm font-bold text-emerald-800 ring-1 ring-emerald-200">
+    Status: valid dan lulus UBT.
+  </div>
+</section>
+{% endblock %}
