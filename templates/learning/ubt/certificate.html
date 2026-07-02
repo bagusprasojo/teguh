@@ -27,15 +27,15 @@
     .stat:nth-child(2) { background: linear-gradient(120deg, #2874e5 0%, #12a9c9 100%); }
     .stat:nth-child(3) { background: linear-gradient(120deg, #1ea55a 0%, #58c71c 100%); }
     .stat span { display: block; font-size: 8pt; font-weight: 900; text-transform: uppercase; opacity: .84; letter-spacing: .3pt; }
-    .stat strong { display: block; margin-top: 1mm; font-size: 18 pt; line-height: 1; letter-spacing: .4pt; }
+    .stat strong { display: block; margin-top: 1mm; font-size: 18pt; line-height: 1; letter-spacing: .4pt; }
     .footer { position: absolute; left: 8mm; right: 8mm; bottom: 4mm; display: flex; justify-content: space-between; align-items: end; margin-top: 0; text-align: left; color: #475569; font-size: 8.5pt; }
     .signature { text-align: center; min-width: 62mm; }
     .signature .line { margin: 4mm auto 2mm; width: 55mm; border-top: .5mm solid #0f172a; }
     .signature strong { color: #0f172a; }
     .cert-no { max-width: 126mm; line-height: 1.2; }
-    .qr { display: table; margin-top: 1.8mm; }
-    .qr img { display: table-cell; width: 17mm; height: 17mm; border: .5mm solid #e2e8f0; border-radius: 2mm; padding: 1mm; background: white; vertical-align: middle; }
-    .qr span { display: table-cell; max-width: 80mm; padding-left: 3mm; vertical-align: middle; font-size: 6.5pt; color: #64748b; word-break: break-all; }
+    .qr { margin-top: 1.8mm; border-collapse: collapse; }
+    .qr-image { width: 17mm; height: 17mm; border: .5mm solid #e2e8f0; border-radius: 2mm; padding: 1mm; background: white; }
+    .qr-text { max-width: 80mm; padding-left: 3mm; vertical-align: middle; font-size: 6.5pt; color: #64748b; word-break: break-all; }
   </style>
 </head>
 <body>
@@ -64,7 +64,7 @@
             <strong>No. Sertifikat</strong><br>
             {{ certificate_number }}<br>
             Dokumen ini diterbitkan otomatis oleh sistem Koready.
-            <div class="qr"><img src="{{ qr_code_data_uri }}" alt="QR Verifikasi"><span>Scan QR untuk validasi sertifikat:<br>{{ verification_url }}</span></div>
+            <table class="qr"><tr><td><img class="qr-image" src="{{ qr_code_data_uri }}" alt="QR Verifikasi"></td><td class="qr-text">Scan QR untuk validasi sertifikat:<br>{{ verification_url }}</td></tr></table>
           </div>
           <div class="signature">
             <div class="line"></div>
@@ -77,6 +77,7 @@
   </main>
 </body>
 </html>
+
 
 
 
