@@ -18,7 +18,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from .importers import build_cbt_import_template_xlsx, build_ubt_import_template_xlsx, import_cbt_from_excel, import_ubt_from_excel
-from .forms import BlogCategoryForm, BlogPostForm, CBTForm, CBTImportForm, QuestionForm, RegisterForm, UBTForm, UBTImportForm, UBTPackageForm, UBTQuestionForm, UBTRegistrationForm, UBTRegistrationStatusForm, UserPhotoForm, UserPreferenceForm, UserProfileForm, VideoForm, VoucherForm, VoucherRedeemForm
+from .forms import BlogCategoryForm, BlogPostForm, CBTForm, CBTImportForm, EmailOrUsernameAuthenticationForm, QuestionForm, RegisterForm, UBTForm, UBTImportForm, UBTPackageForm, UBTQuestionForm, UBTRegistrationForm, UBTRegistrationStatusForm, UserPhotoForm, UserPreferenceForm, UserProfileForm, VideoForm, VoucherForm, VoucherRedeemForm
 from .emails import send_ubt_payment_email, send_ubt_voucher_email
 from .models import BlogCategory, BlogPost, BlogPostRead, CBT, CBTAttempt, CBTAttemptAnswer, Choice, Question, UBT, UBTAttempt, UBTAttemptAnswer, UBTChoice, UBTPackage, UBTQuestion, UBTRegistration, LandingPageVisit, UserAccess, UserUBTAccess, UserPreference, UserProfile, Video, Voucher
 
@@ -49,6 +49,7 @@ def prepare_weasyprint_environment():
 
 class UserLoginView(LoginView):
     template_name = "registration/login.html"
+    authentication_form = EmailOrUsernameAuthenticationForm
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -731,6 +732,7 @@ def admin_ubt_registration_detail(request, uuid):
             messages.success(request, "Status pendaftaran UBT berhasil diperbarui.")
         return redirect("admin_ubt_registration_detail", uuid=registration.uuid)
     return render(request, "learning/admin/ubt_registration_detail.html", {"registration": registration, "form": form})
+
 
 
 

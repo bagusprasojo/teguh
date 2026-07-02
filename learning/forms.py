@@ -1,10 +1,25 @@
 ﻿from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 
 from .models import BlogCategory, BlogPost, CBT, Choice, Question, UBT, UBTChoice, UBTPackage, UBTQuestion, UBTRegistration, UserPreference, UserProfile, Video, Voucher
 
 
+
+
+class EmailOrUsernameAuthenticationForm(AuthenticationForm):
+    username = forms.CharField(label="Username atau Email")
+
+    def clean_username(self):
+        identifier = self.cleaned_data["username"].strip()
+        if "@" not in identifier:
+            return identifier
+        users = User.objects.filter(email__iexact=identifier)
+        if users.count() == 1:
+            return users.first().username
+        if users.count() > 1:
+            raise forms.ValidationError("Email ini dipakai oleh lebih dari satu akun. Silakan login menggunakan username.")
+        return identifier
 
 class BlogCategoryForm(forms.ModelForm):
     class Meta:
@@ -62,6 +77,11 @@ class RegisterForm(UserCreationForm):
         self.fields["password2"].label = "Konfirmasi password"
         self.fields["password1"].help_text = "Minimal 8 karakter dan jangan memakai password yang terlalu umum."
         self.fields["password2"].help_text = "Masukkan password yang sama untuk konfirmasi."
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip()
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("Email ini sudah terdaftar. Silakan login atau gunakan email lain.")
+        return email
 
 
 class UserProfileForm(forms.ModelForm):
@@ -324,6 +344,7 @@ class UBTImportForm(forms.Form):
         if not uploaded.name.lower().endswith(".xlsx"):
             raise forms.ValidationError("File harus berformat .xlsx.")
         return uploaded
+
 
 
 
