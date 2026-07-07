@@ -9,10 +9,10 @@
   <link rel="stylesheet" href="/static/css/app.css">
 </head>
 <body class="min-h-screen bg-stone-50 text-zinc-900 antialiased {{ appearance_classes }}">
-  <header class="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/90 backdrop-blur">
+  <header class="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/90 backdrop-blur" x-data="{ mobileOpen: false }">
     <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
       <a href="{% url 'home' %}" class="text-xl font-black tracking-tight text-rose-700 brand-link">Koready <span class="text-sm font-semibold text-zinc-500">&#54620;&#44544;</span></a>
-      <div class="flex items-center gap-2 text-sm font-semibold">
+      <div class="hidden items-center gap-2 text-sm font-semibold lg:flex">
         {% if user.is_authenticated %}
           {% if user.is_staff %}
             <a class="nav-link" href="{% url 'admin_dashboard' %}">Dashboard</a>
@@ -66,7 +66,71 @@
           <a class="btn-primary" href="{% url 'register' %}">Daftar</a>
         {% endif %}
       </div>
+      <button type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-zinc-200 text-zinc-800 hover:bg-zinc-50 lg:hidden" @click="mobileOpen = !mobileOpen" :aria-expanded="mobileOpen.toString()" aria-label="Buka menu">
+        <span class="sr-only">Menu</span>
+        <svg x-show="!mobileOpen" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <svg x-cloak x-show="mobileOpen" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
     </nav>
+    <div x-cloak x-show="mobileOpen" x-transition class="border-t border-zinc-200 bg-white lg:hidden">
+      <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6">
+        {% if user.is_authenticated %}
+          <div class="mb-4 flex items-center gap-3 rounded-md bg-zinc-50 p-3">
+            {% if nav_profile.photo %}
+              <img src="{{ nav_profile.photo.url }}" alt="{{ nav_display_name }}" class="profile-avatar">
+            {% else %}
+              <span class="profile-avatar profile-avatar-initials">{{ nav_initials }}</span>
+            {% endif %}
+            <div class="min-w-0">
+              <p class="truncate text-sm font-black text-zinc-900">{{ nav_display_name }}</p>
+              <p class="truncate text-xs font-semibold text-zinc-500">{{ user.email }}</p>
+            </div>
+          </div>
+          {% if user.is_staff %}
+            <div class="grid gap-2 text-sm font-bold">
+              <a class="dropdown-link rounded-md" href="{% url 'admin_dashboard' %}">Dashboard</a>
+              <div class="rounded-md border border-zinc-200 p-3">
+                <p class="mb-2 text-xs font-black uppercase text-zinc-500">Materi Pembelajaran</p>
+                <a class="dropdown-link rounded-md" href="{% url 'admin_video_list' %}">Video</a>
+                <a class="dropdown-link rounded-md" href="{% url 'admin_voucher_list' %}">Voucher</a>
+                <a class="dropdown-link rounded-md" href="{% url 'admin_cbt_list' %}">CBT</a>
+                <a class="dropdown-link rounded-md" href="{% url 'admin_attempt_list' %}">Hasil</a>
+              </div>
+              <div class="rounded-md border border-zinc-200 p-3">
+                <p class="mb-2 text-xs font-black uppercase text-zinc-500">UBT</p>
+                <a class="dropdown-link rounded-md" href="{% url 'admin_ubt_package_list' %}">Paket UBT</a>
+                <a class="dropdown-link rounded-md" href="{% url 'admin_ubt_registration_list' %}">Pendaftaran UBT</a>
+                <a class="dropdown-link rounded-md" href="{% url 'admin_ubt_list' %}">UBT</a>
+              </div>
+              <a class="dropdown-link rounded-md" href="{% url 'admin_blog_post_list' %}">Blog</a>
+              <a class="dropdown-link rounded-md" href="{% url 'admin_user_list' %}">User</a>
+            </div>
+          {% else %}
+            <div class="grid gap-2 text-sm font-bold">
+              <a class="dropdown-link rounded-md" href="{% url 'dashboard' %}">Dashboard</a>
+              <a class="dropdown-link rounded-md" href="{% url 'video_list' %}">Video</a>
+              <a class="dropdown-link rounded-md" href="{% url 'cbt_list' %}">CBT</a>
+              <a class="dropdown-link rounded-md" href="{% url 'ubt_dashboard' %}">UBT</a>
+              <a class="dropdown-link rounded-md" href="{% url 'blog_list' %}">Blog</a>
+            </div>
+          {% endif %}
+          <div class="mt-4 border-t border-zinc-200 pt-4">
+            <a class="dropdown-link rounded-md" href="{% url 'profile' %}">Profile</a>
+            <a class="dropdown-link rounded-md" href="{% url 'appearance_settings' %}">Ubah Tampilan</a>
+            <form method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button class="dropdown-link rounded-md text-left" type="submit">Keluar</button>
+            </form>
+          </div>
+        {% else %}
+          <div class="grid gap-2 text-sm font-bold">
+            <a class="dropdown-link rounded-md" href="{% url 'blog_list' %}">Blog</a>
+            <a class="dropdown-link rounded-md" href="{% url 'login' %}">Login</a>
+            <a class="btn-primary justify-center" href="{% url 'register' %}">Daftar</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
   </header>
   {% if user.is_authenticated and not user.is_staff %}
     <div class="border-b border-amber-200 bg-amber-50">
@@ -84,6 +148,7 @@
   <a href="https://wa.me/6282247964226?text=Halo%20Koready%2C%20saya%20ingin%20bertanya%20tentang%20belajar%20Bahasa%20Korea" target="_blank" rel="noopener" class="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-2xl font-black text-white shadow-xl shadow-emerald-900/20" aria-label="WhatsApp">WA</a>
 </body>
 </html>
+
 
 
 
