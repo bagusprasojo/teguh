@@ -292,6 +292,72 @@ def ubt_access_required(request):
     return True
 
 
+
+CHOICE_ANSWER_TYPES = {"text", "image", "audio", "video"}
+
+
+def collect_choice_payloads(request, existing_choices=None):
+    existing_choices = existing_choices or []
+    correct_choice = request.POST.get("correct_choice")
+    payloads = []
+    errors = []
+
+    for index in range(1, 5):
+        existing = existing_choices[index - 1] if index <= len(existing_choices) else None
+        answer_type = request.POST.get(f"choice_{index}_answer_type", "text")
+        text = request.POST.get(f"choice_{index}_text", "").strip()
+        media_url = request.POST.get(f"choice_{index}_media_url", "").strip()
+        media_file = request.FILES.get(f"choice_{index}_media_file")
+        existing_media_file = existing.media_file if existing and getattr(existing, "media_file", None) and not media_file else None
+
+        if answer_type not in CHOICE_ANSWER_TYPES:
+            errors.append(f"Tipe pilihan {index} tidak valid.")
+            continue
+
+        has_value = bool(text or media_url or media_file or existing_media_file)
+        if not has_value:
+            continue
+
+        if answer_type == "text":
+            if not text:
+                errors.append(f"Pilihan {index} wajib berisi teks.")
+            media_url = ""
+            media_file = None
+            existing_media_file = None
+        elif not (media_file or media_url or existing_media_file):
+            errors.append(f"Pilihan {index} wajib memiliki file atau URL media.")
+
+        payloads.append({
+            "index": index,
+            "text": text,
+            "answer_type": answer_type,
+            "media_file": media_file or existing_media_file,
+            "media_url": media_url,
+            "is_correct": str(index) == str(correct_choice),
+        })
+
+    if len(payloads) < 2:
+        errors.append("Minimal 2 pilihan jawaban wajib diisi.")
+    if correct_choice not in {"1", "2", "3", "4"}:
+        errors.append("Pilih satu jawaban yang benar.")
+    elif not any(payload["is_correct"] for payload in payloads):
+        errors.append("Pilihan yang ditandai benar tidak boleh kosong.")
+
+    return payloads, errors
+
+
+def save_choice_payloads(question, choice_model, payloads):
+    question.choices.all().delete()
+    for payload in payloads:
+        choice_model.objects.create(
+            question=question,
+            text=payload["text"],
+            answer_type=payload["answer_type"],
+            media_file=payload["media_file"],
+            media_url=payload["media_url"],
+            is_correct=payload["is_correct"],
+        )
+
 def access_required(request):
     if not has_active_access(request.user):
         messages.warning(request, "Masukkan voucher aktif untuk membuka konten ini.")
@@ -347,7 +413,7 @@ def ubt_take(request, uuid):
     if not ubt_access_required(request):
         return redirect("ubt_dashboard")
     ubt = get_object_or_404(UBT.objects.prefetch_related("questions__choices"), uuid=uuid, is_active=True)
-    questions = list(ubt.questions.all())
+    questions = list(ubt.questions.filter(is_active=True).prefetch_related("choices"))
     session_key = f"ubt_started_at_{ubt.uuid}"
     now = timezone.now()
     started_at_raw = request.session.get(session_key)
@@ -471,7 +537,7 @@ def cbt_take(request, uuid):
     if not access_required(request):
         return redirect("redeem_voucher")
     cbt = get_object_or_404(CBT.objects.prefetch_related("questions__choices"), uuid=uuid, is_active=True)
-    questions = list(cbt.questions.all())
+    questions = list(cbt.questions.filter(is_active=True).prefetch_related("choices"))
     if request.method == "POST":
         attempt = CBTAttempt.objects.create(user=request.user, cbt=cbt, total_questions=len(questions))
         correct = 0
@@ -638,19 +704,33 @@ def admin_question_form(request, cbt_uuid=None, uuid=None):
     form = QuestionForm(request.POST or None, request.FILES or None, instance=question)
     existing = list(question.choices.all()) if question else []
     if request.method == "POST" and form.is_valid():
-        question = form.save(commit=False)
-        question.cbt = cbt
-        question.save()
-        correct_index = request.POST.get("correct_choice")
-        question.choices.all().delete()
-        for index in range(1, 5):
-            text = request.POST.get(f"choice_{index}", "").strip()
-            if text:
-                Choice.objects.create(question=question, text=text, is_correct=str(index) == correct_index)
-        messages.success(request, "Soal berhasil disimpan.")
-        return redirect("admin_cbt_list")
+        payloads, choice_errors = collect_choice_payloads(request, existing)
+        if choice_errors:
+            for error in choice_errors:
+                messages.error(request, error)
+        else:
+            question = form.save(commit=False)
+            question.cbt = cbt
+            question.save()
+            save_choice_payloads(question, Choice, payloads)
+            messages.success(request, "Soal berhasil disimpan.")
+            return redirect("admin_cbt_list")
     return render(request, "learning/admin/question_form.html", {"form": form, "cbt": cbt, "question": question, "choices": existing})
 
+
+@admin_required
+def admin_question_delete(request, uuid):
+    question = get_object_or_404(Question, uuid=uuid)
+    if request.method != "POST":
+        return redirect("admin_cbt_list")
+    if CBTAttemptAnswer.objects.filter(question=question).exists():
+        question.is_active = False
+        question.save(update_fields=["is_active"])
+        messages.warning(request, "Soal sudah pernah dijawab, jadi tidak dihapus permanen. Soal telah dinonaktifkan dan tidak muncul pada pengerjaan baru.")
+    else:
+        question.delete()
+        messages.success(request, "Soal berhasil dihapus permanen karena belum pernah dijawab.")
+    return redirect("admin_cbt_list")
 
 @admin_required
 def admin_user_list(request):
@@ -729,19 +809,33 @@ def admin_ubt_question_form(request, ubt_uuid=None, uuid=None):
     form = UBTQuestionForm(request.POST or None, request.FILES or None, instance=question)
     existing = list(question.choices.all()) if question else []
     if request.method == "POST" and form.is_valid():
-        question = form.save(commit=False)
-        question.ubt = ubt
-        question.save()
-        correct_index = request.POST.get("correct_choice")
-        question.choices.all().delete()
-        for index in range(1, 5):
-            text = request.POST.get(f"choice_{index}", "").strip()
-            if text:
-                UBTChoice.objects.create(question=question, text=text, is_correct=str(index) == correct_index)
-        messages.success(request, "Soal UBT berhasil disimpan.")
-        return redirect("admin_ubt_list")
+        payloads, choice_errors = collect_choice_payloads(request, existing)
+        if choice_errors:
+            for error in choice_errors:
+                messages.error(request, error)
+        else:
+            question = form.save(commit=False)
+            question.ubt = ubt
+            question.save()
+            save_choice_payloads(question, UBTChoice, payloads)
+            messages.success(request, "Soal UBT berhasil disimpan.")
+            return redirect("admin_ubt_list")
     return render(request, "learning/admin/ubt_question_form.html", {"form": form, "ubt": ubt, "question": question, "choices": existing})
 
+
+@admin_required
+def admin_ubt_question_delete(request, uuid):
+    question = get_object_or_404(UBTQuestion, uuid=uuid)
+    if request.method != "POST":
+        return redirect("admin_ubt_list")
+    if UBTAttemptAnswer.objects.filter(question=question).exists():
+        question.is_active = False
+        question.save(update_fields=["is_active"])
+        messages.warning(request, "Soal UBT sudah pernah dijawab, jadi tidak dihapus permanen. Soal telah dinonaktifkan dan tidak muncul pada pengerjaan baru.")
+    else:
+        question.delete()
+        messages.success(request, "Soal UBT berhasil dihapus permanen karena belum pernah dijawab.")
+    return redirect("admin_ubt_list")
 
 @admin_required
 def admin_ubt_registration_list(request):
@@ -764,6 +858,11 @@ def admin_ubt_registration_detail(request, uuid):
             messages.success(request, "Status pendaftaran UBT berhasil diperbarui.")
         return redirect("admin_ubt_registration_detail", uuid=registration.uuid)
     return render(request, "learning/admin/ubt_registration_detail.html", {"registration": registration, "form": form})
+
+
+
+
+
 
 
 

@@ -1,0 +1,72 @@
+﻿<div x-cloak x-show="showChoiceModal" x-transition.opacity class="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/50 px-4" role="dialog" aria-modal="true">
+  <div class="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl" @click.outside="showChoiceModal = false">
+    <h3 class="text-xl font-black text-zinc-950">Pilihan jawaban belum lengkap</h3>
+    <p class="mt-2 text-sm text-zinc-600">Perbaiki data berikut sebelum menyimpan soal.</p>
+    <ul class="mt-4 space-y-2 text-sm text-red-700">
+      <template x-for="error in choiceErrors" :key="error">
+        <li class="rounded-md bg-red-50 px-3 py-2" x-text="error"></li>
+      </template>
+    </ul>
+    <div class="mt-5 flex justify-end">
+      <button type="button" class="btn-primary" @click="showChoiceModal = false">Mengerti</button>
+    </div>
+  </div>
+</div>
+<script>
+  function choiceFormValidator() {
+    return {
+      showChoiceModal: false,
+      choiceErrors: [],
+      validateChoices(form) {
+        const rows = Array.from(form.querySelectorAll('[data-choice-row]'));
+        const filledRows = [];
+        const errors = [];
+        const correct = form.querySelector('input[name="correct_choice"]:checked');
+
+        rows.forEach((row) => {
+          const index = row.dataset.choiceIndex;
+          const type = row.querySelector('[data-choice-type]')?.value || 'text';
+          const text = (row.querySelector('[data-choice-text]')?.value || '').trim();
+          const url = (row.querySelector('[data-choice-url]')?.value || '').trim();
+          const fileInput = row.querySelector('[data-choice-file]');
+          const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+          const hasExistingMedia = row.dataset.hasExistingMedia === 'true';
+          const hasAnyValue = Boolean(text || url || hasFile || hasExistingMedia);
+
+          if (!hasAnyValue) {
+            return;
+          }
+
+          if (type === 'text') {
+            if (!text) {
+              errors.push(`Pilihan ${index} bertipe text wajib berisi teks.`);
+              return;
+            }
+          } else if (!(url || hasFile || hasExistingMedia)) {
+            errors.push(`Pilihan ${index} bertipe media wajib memiliki upload file atau URL media.`);
+            return;
+          }
+
+          filledRows.push(row);
+        });
+
+        if (filledRows.length < 2) {
+          errors.push('Minimal 2 pilihan jawaban wajib diisi.');
+        }
+
+        if (!correct) {
+          errors.push('Pilih satu jawaban yang benar.');
+        } else {
+          const correctRow = correct.closest('[data-choice-row]');
+          if (!filledRows.includes(correctRow)) {
+            errors.push('Pilihan yang ditandai benar tidak boleh kosong.');
+          }
+        }
+
+        this.choiceErrors = errors;
+        this.showChoiceModal = errors.length > 0;
+        return errors.length === 0;
+      },
+    };
+  }
+</script>

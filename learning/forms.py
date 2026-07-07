@@ -153,7 +153,7 @@ class CBTForm(forms.ModelForm):
 class QuestionForm(forms.ModelForm):
     class Meta:
         model = Question
-        fields = ["text", "media_type", "media_file", "media_url", "explanation", "order"]
+        fields = ["text", "media_type", "media_file", "media_url", "explanation", "order", "is_active"]
         labels = {
             "text": "Teks soal",
             "media_type": "Tipe media",
@@ -161,6 +161,7 @@ class QuestionForm(forms.ModelForm):
             "media_url": "URL media",
             "explanation": "Pembahasan",
             "order": "Urutan",
+            "is_active": "Aktif",
         }
         help_texts = {
             "media_file": "Upload gambar/audio/video lokal. Kosongkan jika memakai URL.",
@@ -295,7 +296,7 @@ class UBTRegistrationStatusForm(forms.ModelForm):
 class UBTQuestionForm(forms.ModelForm):
     class Meta:
         model = UBTQuestion
-        fields = ["text", "media_type", "media_file", "media_url", "explanation", "order"]
+        fields = ["text", "media_type", "media_file", "media_url", "explanation", "order", "is_active"]
         labels = {
             "text": "Teks soal",
             "media_type": "Tipe media",
@@ -303,6 +304,7 @@ class UBTQuestionForm(forms.ModelForm):
             "media_url": "URL media",
             "explanation": "Pembahasan",
             "order": "Urutan",
+            "is_active": "Aktif",
         }
         help_texts = {
             "media_file": "Upload gambar/audio/video lokal. Kosongkan jika memakai URL.",
@@ -353,6 +355,7 @@ class UBTImportForm(forms.Form):
         if not uploaded.name.lower().endswith(".xlsx"):
             raise forms.ValidationError("File harus berformat .xlsx.")
         return uploaded
+
 
 
 

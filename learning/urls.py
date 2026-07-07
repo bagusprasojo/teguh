@@ -50,6 +50,7 @@ urlpatterns = [
     path("manage/cbt/<uuid:uuid>/edit/", views.admin_cbt_form, name="admin_cbt_edit"),
     path("manage/cbt/<uuid:cbt_uuid>/questions/new/", views.admin_question_form, name="admin_question_new"),
     path("manage/questions/<uuid:uuid>/edit/", views.admin_question_form, name="admin_question_edit"),
+    path("manage/questions/<uuid:uuid>/delete/", views.admin_question_delete, name="admin_question_delete"),
     path("manage/users/", views.admin_user_list, name="admin_user_list"),
     path("manage/attempts/", views.admin_attempt_list, name="admin_attempt_list"),
     path("manage/ubt/packages/", views.admin_ubt_package_list, name="admin_ubt_package_list"),
@@ -62,9 +63,11 @@ urlpatterns = [
     path("manage/ubt/<uuid:uuid>/edit/", views.admin_ubt_form, name="admin_ubt_edit"),
     path("manage/ubt/<uuid:ubt_uuid>/questions/new/", views.admin_ubt_question_form, name="admin_ubt_question_new"),
     path("manage/ubt/questions/<uuid:uuid>/edit/", views.admin_ubt_question_form, name="admin_ubt_question_edit"),
+    path("manage/ubt/questions/<uuid:uuid>/delete/", views.admin_ubt_question_delete, name="admin_ubt_question_delete"),
     path("manage/ubt/registrations/", views.admin_ubt_registration_list, name="admin_ubt_registration_list"),
     path("manage/ubt/registrations/<uuid:uuid>/", views.admin_ubt_registration_detail, name="admin_ubt_registration_detail"),
 ]
+
 
 
 

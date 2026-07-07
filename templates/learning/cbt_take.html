@@ -14,7 +14,7 @@
         {% for choice in question.choices.all %}
         <label class="flex cursor-pointer items-start gap-3 rounded-md border border-zinc-200 p-3 hover:bg-rose-50">
           <input class="mt-1" type="radio" name="question_{{ question.id }}" value="{{ choice.id }}">
-          <span>{{ choice.text }}</span>
+          {% include "learning/choice_content.html" with choice=choice %}
         </label>
         {% endfor %}
       </div>
@@ -26,3 +26,4 @@
   </form>
 </section>
 {% endblock %}
+

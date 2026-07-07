@@ -1,3 +1,42 @@
 ﻿{% extends "learning/admin/base_admin.html" %}
-{% block admin_content %}<div class="mb-4 flex flex-wrap gap-2"><a class="btn-primary" href="{% url 'admin_ubt_new' %}">Tambah UBT</a><a class="btn-muted" href="{% url 'admin_ubt_import' %}">Import Excel</a></div><div class="space-y-4">{% for ubt in ubts %}<div class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-zinc-200"><div class="flex flex-wrap items-center justify-between gap-3"><div><h2 class="text-xl font-black">{{ ubt.title }}</h2><p class="text-sm text-zinc-600">{{ ubt.questions.count }} soal · KKM {{ ubt.passing_score }} · {{ ubt.duration_minutes }} menit</p></div><div class="flex gap-2"><a class="btn-muted" href="{% url 'admin_ubt_question_new' ubt.uuid %}">Tambah Soal</a><a class="btn-muted" href="{% url 'admin_ubt_edit' ubt.uuid %}">Edit UBT</a></div></div><div class="mt-4 grid gap-2">{% for question in ubt.questions.all %}<a class="rounded-md border border-zinc-200 p-3 text-sm hover:bg-zinc-50" href="{% url 'admin_ubt_question_edit' question.uuid %}">{{ question.order }}. {{ question.text|truncatechars:90 }}</a>{% endfor %}</div></div>{% endfor %}</div>{% endblock %}
-
+{% block admin_content %}
+<div class="mb-4 flex flex-wrap gap-2">
+  <a class="btn-primary" href="{% url 'admin_ubt_new' %}">Tambah UBT</a>
+  <a class="btn-muted" href="{% url 'admin_ubt_import' %}">Import Excel</a>
+</div>
+<div class="space-y-4">
+  {% for ubt in ubts %}
+  <div class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-zinc-200">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="text-xl font-black">{{ ubt.title }}</h2>
+        <p class="text-sm text-zinc-600">{{ ubt.questions.count }} soal · KKM {{ ubt.passing_score }} · {{ ubt.duration_minutes }} menit</p>
+      </div>
+      <div class="flex gap-2">
+        <a class="btn-muted" href="{% url 'admin_ubt_question_new' ubt.uuid %}">Tambah Soal</a>
+        <a class="btn-muted" href="{% url 'admin_ubt_edit' ubt.uuid %}">Edit UBT</a>
+      </div>
+    </div>
+    <div class="mt-4 grid gap-2">
+      {% for question in ubt.questions.all %}
+      <div class="flex flex-wrap items-center justify-between gap-3 rounded-md border border-zinc-200 p-3 text-sm {% if not question.is_active %}bg-zinc-50 text-zinc-500{% else %}hover:bg-zinc-50{% endif %}">
+        <a class="min-w-0 flex-1" href="{% url 'admin_ubt_question_edit' question.uuid %}">
+          <span class="font-bold">{{ question.order }}.</span> {{ question.text|truncatechars:90 }}
+          {% if not question.is_active %}<span class="ml-2 rounded bg-zinc-200 px-2 py-0.5 text-xs font-bold text-zinc-600">Nonaktif</span>{% endif %}
+        </a>
+        <div class="flex items-center gap-2">
+          <a class="btn-muted" href="{% url 'admin_ubt_question_edit' question.uuid %}">Edit</a>
+          <form method="post" action="{% url 'admin_ubt_question_delete' question.uuid %}" onsubmit="return confirm('Jika soal sudah pernah dijawab, soal akan dinonaktifkan. Jika belum pernah dijawab, soal akan dihapus permanen. Lanjutkan?')">
+            {% csrf_token %}
+            <button class="btn-muted" type="submit">Hapus</button>
+          </form>
+        </div>
+      </div>
+      {% empty %}
+      <p class="text-sm text-zinc-500">Belum ada soal UBT.</p>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

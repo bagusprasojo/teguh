@@ -277,6 +277,7 @@ class Question(models.Model):
     media_file = models.FileField(upload_to="question-media/", blank=True)
     media_url = models.URLField(blank=True)
     order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["order", "id"]
@@ -313,14 +314,54 @@ class Question(models.Model):
 
 
 class Choice(models.Model):
+    ANSWER_TEXT = "text"
+    ANSWER_IMAGE = "image"
+    ANSWER_AUDIO = "audio"
+    ANSWER_VIDEO = "video"
+    ANSWER_CHOICES = [
+        (ANSWER_TEXT, "Text"),
+        (ANSWER_IMAGE, "Gambar"),
+        (ANSWER_AUDIO, "Audio"),
+        (ANSWER_VIDEO, "Video"),
+    ]
+
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="choices")
-    text = models.CharField(max_length=500)
+    text = models.CharField(max_length=500, blank=True)
+    answer_type = models.CharField(max_length=20, choices=ANSWER_CHOICES, default=ANSWER_TEXT)
+    media_file = models.FileField(upload_to="choice-media/", blank=True)
+    media_url = models.URLField(blank=True)
     is_correct = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.text
+        return self.text or self.media_source_url or "Pilihan jawaban"
 
+    @property
+    def media_source_url(self):
+        if self.media_file:
+            return self.media_file.url
+        return self.media_url
+
+    @property
+    def youtube_id(self):
+        parsed = urlparse(self.media_url)
+        if parsed.hostname == "youtu.be":
+            return parsed.path.strip("/")
+        if parsed.hostname and "youtube.com" in parsed.hostname:
+            if parsed.path == "/watch":
+                return parse_qs(parsed.query).get("v", [""])[0]
+            if parsed.path.startswith("/embed/") or parsed.path.startswith("/shorts/"):
+                parts = parsed.path.split("/")
+                return parts[2] if len(parts) > 2 else ""
+        return ""
+
+    @property
+    def youtube_embed_url(self):
+        return f"https://www.youtube.com/embed/{self.youtube_id}" if self.youtube_id else ""
+
+    @property
+    def has_media(self):
+        return self.answer_type != self.ANSWER_TEXT and bool(self.media_source_url)
 
 class CBTAttempt(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
@@ -485,6 +526,7 @@ class UBTQuestion(models.Model):
     media_file = models.FileField(upload_to="ubt-question-media/", blank=True)
     media_url = models.URLField(blank=True)
     order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ["order", "id"]
@@ -521,14 +563,54 @@ class UBTQuestion(models.Model):
 
 
 class UBTChoice(models.Model):
+    ANSWER_TEXT = "text"
+    ANSWER_IMAGE = "image"
+    ANSWER_AUDIO = "audio"
+    ANSWER_VIDEO = "video"
+    ANSWER_CHOICES = [
+        (ANSWER_TEXT, "Text"),
+        (ANSWER_IMAGE, "Gambar"),
+        (ANSWER_AUDIO, "Audio"),
+        (ANSWER_VIDEO, "Video"),
+    ]
+
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     question = models.ForeignKey(UBTQuestion, on_delete=models.CASCADE, related_name="choices")
-    text = models.CharField(max_length=500)
+    text = models.CharField(max_length=500, blank=True)
+    answer_type = models.CharField(max_length=20, choices=ANSWER_CHOICES, default=ANSWER_TEXT)
+    media_file = models.FileField(upload_to="ubt-choice-media/", blank=True)
+    media_url = models.URLField(blank=True)
     is_correct = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.text
+        return self.text or self.media_source_url or "Pilihan jawaban UBT"
 
+    @property
+    def media_source_url(self):
+        if self.media_file:
+            return self.media_file.url
+        return self.media_url
+
+    @property
+    def youtube_id(self):
+        parsed = urlparse(self.media_url)
+        if parsed.hostname == "youtu.be":
+            return parsed.path.strip("/")
+        if parsed.hostname and "youtube.com" in parsed.hostname:
+            if parsed.path == "/watch":
+                return parse_qs(parsed.query).get("v", [""])[0]
+            if parsed.path.startswith("/embed/") or parsed.path.startswith("/shorts/"):
+                parts = parsed.path.split("/")
+                return parts[2] if len(parts) > 2 else ""
+        return ""
+
+    @property
+    def youtube_embed_url(self):
+        return f"https://www.youtube.com/embed/{self.youtube_id}" if self.youtube_id else ""
+
+    @property
+    def has_media(self):
+        return self.answer_type != self.ANSWER_TEXT and bool(self.media_source_url)
 
 class UBTAttempt(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
@@ -587,6 +669,11 @@ class UBTRegistration(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.package.name}"
+
+
+
+
+
 
 
 

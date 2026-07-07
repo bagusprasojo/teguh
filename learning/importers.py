@@ -16,6 +16,8 @@ UBT_REQUIRED_COLUMNS = [
     "ubt_title", "ubt_description", "passing_score", "question_order", "question_text",
     "choice_a", "choice_b", "choice_c", "choice_d", "correct_choice", "explanation",
 ]
+CHOICE_KEYS = ["a", "b", "c", "d"]
+CHOICE_TYPES = {"text", "image", "audio", "video"}
 REQUIRED_COLUMNS = CBT_REQUIRED_COLUMNS
 
 
@@ -67,7 +69,7 @@ def parse_excel_rows(uploaded_file, required_columns, title_column):
         return [], CBTImportResult(errors=["Kolom wajib belum ada: " + ", ".join(missing)])
 
     index = {column: headers.index(column) for column in required_columns}
-    optional_index = {column: headers.index(column) for column in ["media_type", "media_url"] if column in headers}
+    all_index = {column: position for position, column in enumerate(headers)}
     parsed_rows = []
     result = CBTImportResult()
 
@@ -80,9 +82,9 @@ def parse_excel_rows(uploaded_file, required_columns, title_column):
             return row[position] if position < len(row) else ""
 
         def optional_value(column):
-            if column not in optional_index:
+            if column not in all_index:
                 return ""
-            position = optional_index[column]
+            position = all_index[column]
             return row[position] if position < len(row) else ""
 
         item_title = normalize(value(title_column))
@@ -90,11 +92,21 @@ def parse_excel_rows(uploaded_file, required_columns, title_column):
         passing_score = parse_int(value("passing_score"), 70)
         question_order = parse_int(value("question_order"), len(parsed_rows) + 1)
         question_text = normalize(value("question_text"))
-        choices = [normalize(value("choice_a")), normalize(value("choice_b")), normalize(value("choice_c")), normalize(value("choice_d"))]
         media_type = normalize(optional_value("media_type")).lower() or "none"
         media_url = normalize(optional_value("media_url"))
         correct_choice = normalize(value("correct_choice")).upper()
         explanation = normalize(value("explanation"))
+        choices = []
+
+        for key in CHOICE_KEYS:
+            choice_type = normalize(optional_value(f"choice_{key}_type")).lower() or "text"
+            choice_text = normalize(value(f"choice_{key}"))
+            choice_media_url = normalize(optional_value(f"choice_{key}_media_url"))
+            choices.append({
+                "text": choice_text,
+                "answer_type": choice_type,
+                "media_url": choice_media_url,
+            })
 
         row_errors = []
         if not item_title:
@@ -105,15 +117,31 @@ def parse_excel_rows(uploaded_file, required_columns, title_column):
             row_errors.append("question_order harus angka minimal 1")
         if not question_text:
             row_errors.append("question_text wajib diisi")
-        if len([choice for choice in choices if choice]) < 2:
-            row_errors.append("minimal 2 pilihan jawaban wajib diisi")
         if media_type not in {"none", "image", "audio", "video", "youtube"}:
             row_errors.append("media_type harus none, image, audio, video, atau youtube")
         if media_type in {"image", "audio", "video", "youtube"} and not media_url:
             row_errors.append("media_url wajib diisi jika media_type bukan none")
+
+        filled_choices = []
+        for index_number, choice in enumerate(choices, start=1):
+            if choice["answer_type"] not in CHOICE_TYPES:
+                row_errors.append(f"choice_{CHOICE_KEYS[index_number - 1]}_type harus text, image, audio, atau video")
+                continue
+            if choice["answer_type"] == "text":
+                has_choice = bool(choice["text"])
+                choice["media_url"] = ""
+            else:
+                has_choice = bool(choice["media_url"])
+                if has_choice is False and choice["text"]:
+                    row_errors.append(f"choice_{CHOICE_KEYS[index_number - 1]}_media_url wajib diisi untuk pilihan media")
+            if has_choice:
+                filled_choices.append(index_number)
+
+        if len(filled_choices) < 2:
+            row_errors.append("minimal 2 pilihan jawaban wajib diisi")
         if correct_choice not in {"A", "B", "C", "D"}:
             row_errors.append("correct_choice harus A, B, C, atau D")
-        elif not choices[ord(correct_choice) - ord("A")]:
+        elif ord(correct_choice) - ord("A") + 1 not in filled_choices:
             row_errors.append("pilihan yang ditandai benar tidak boleh kosong")
 
         if row_errors:
@@ -170,7 +198,6 @@ def save_imported_rows(rows, mode, parent_model, question_model, choice_model, r
                 "media_url": item["media_url"],
                 "order": item["question_order"],
             }
-            # Explicit relation names are clearer than clever singularization.
             if parent_model is CBT:
                 question_kwargs = {"cbt": parent, **{k: v for k, v in question_kwargs.items() if k not in {"question"}}}
             else:
@@ -179,10 +206,17 @@ def save_imported_rows(rows, mode, parent_model, question_model, choice_model, r
             result.created_questions += 1
 
             correct_index = ord(item["correct_choice"]) - ord("A")
-            for index, choice_text in enumerate(item["choices"]):
-                if not choice_text:
+            for index_number, choice in enumerate(item["choices"]):
+                has_choice = bool(choice["text"]) if choice["answer_type"] == "text" else bool(choice["media_url"])
+                if not has_choice:
                     continue
-                choice_model.objects.create(question=question, text=choice_text, is_correct=index == correct_index)
+                choice_model.objects.create(
+                    question=question,
+                    text=choice["text"],
+                    answer_type=choice["answer_type"],
+                    media_url=choice["media_url"],
+                    is_correct=index_number == correct_index,
+                )
                 result.created_choices += 1
     return result
 
@@ -241,19 +275,39 @@ def build_template_xlsx(headers, sample_rows, sheet_name):
     return output.getvalue()
 
 
+def choice_media_headers(prefix):
+    return [
+        f"{prefix}",
+        f"{prefix}_type",
+        f"{prefix}_media_url",
+    ]
+
+
+def build_import_headers(required_columns):
+    return (
+        required_columns[:5]
+        + ["media_type", "media_url"]
+        + choice_media_headers("choice_a")
+        + choice_media_headers("choice_b")
+        + choice_media_headers("choice_c")
+        + choice_media_headers("choice_d")
+        + ["correct_choice", "explanation"]
+    )
+
+
 def build_cbt_import_template_xlsx():
-    headers = CBT_REQUIRED_COLUMNS[:5] + ["media_type", "media_url"] + CBT_REQUIRED_COLUMNS[5:]
+    headers = build_import_headers(CBT_REQUIRED_COLUMNS)
     samples = [
-        ["CBT Kosakata Korea", "Latihan kosakata dasar", "70", "1", "Apa arti sekolah?", "none", "", "Sekolah", "Rumah", "Pasar", "Kantor", "A", "hakgyo berarti sekolah."],
-        ["CBT Kosakata Korea", "Latihan kosakata dasar", "70", "2", "Apa arti air?", "audio", "https://example.com/audio/mul.mp3", "Air", "Buku", "Makanan", "Teman", "A", "mul berarti air."],
+        ["CBT Kosakata Korea", "Latihan kosakata dasar", "70", "1", "Apa arti sekolah?", "none", "", "Sekolah", "text", "", "Rumah", "text", "", "Pasar", "text", "", "Kantor", "text", "", "A", "hakgyo berarti sekolah."],
+        ["CBT Kosakata Korea", "Latihan kosakata dasar", "70", "2", "Dengarkan audio, mana arti yang tepat?", "audio", "https://example.com/audio/mul.mp3", "Air", "text", "", "", "image", "https://example.com/images/book.png", "Makanan", "text", "", "Teman", "text", "", "A", "mul berarti air."],
     ]
     return build_template_xlsx(headers, samples, "Template CBT")
 
 
 def build_ubt_import_template_xlsx():
-    headers = UBT_REQUIRED_COLUMNS[:5] + ["media_type", "media_url"] + UBT_REQUIRED_COLUMNS[5:]
+    headers = build_import_headers(UBT_REQUIRED_COLUMNS)
     samples = [
-        ["UBT Bahasa Korea Dasar", "Latihan UBT dasar", "70", "1", "Apa arti sekolah?", "none", "", "Sekolah", "Rumah", "Pasar", "Kantor", "A", "hakgyo berarti sekolah."],
-        ["UBT Bahasa Korea Dasar", "Latihan UBT dasar", "70", "2", "Apa arti air?", "audio", "https://example.com/audio/mul.mp3", "Air", "Buku", "Makanan", "Teman", "A", "mul berarti air."],
+        ["UBT Bahasa Korea Dasar", "Latihan UBT dasar", "70", "1", "Apa arti sekolah?", "none", "", "Sekolah", "text", "", "Rumah", "text", "", "Pasar", "text", "", "Kantor", "text", "", "A", "hakgyo berarti sekolah."],
+        ["UBT Bahasa Korea Dasar", "Latihan UBT dasar", "70", "2", "Pilih gambar yang sesuai.", "none", "", "", "image", "https://example.com/images/water.png", "Buku", "text", "", "Makanan", "text", "", "Teman", "text", "", "A", "Gambar air adalah jawaban yang benar."],
     ]
     return build_template_xlsx(headers, samples, "Template UBT")

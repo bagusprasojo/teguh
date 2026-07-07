@@ -1,0 +1,36 @@
+﻿{% if choice.answer_type == "image" and choice.media_source_url %}
+  <span class="block space-y-2">
+    <img src="{{ choice.media_source_url }}" alt="{{ choice.text|default:'Pilihan gambar' }}" class="max-h-64 max-w-full rounded-md border border-zinc-200 object-contain p-2">
+    {% if choice.text %}<span class="block text-sm text-zinc-700">{{ choice.text }}</span>{% endif %}
+  </span>
+{% elif choice.answer_type == "audio" and choice.media_source_url %}
+  <span class="block space-y-2">
+    <audio controls class="w-full" src="{{ choice.media_source_url }}"></audio>
+    {% if choice.text %}<span class="block text-sm text-zinc-700">{{ choice.text }}</span>{% endif %}
+  </span>
+{% elif choice.answer_type == "video" and choice.youtube_embed_url %}
+  <span class="block space-y-2">
+    <span class="block aspect-video w-full overflow-hidden rounded-md border border-zinc-200 bg-black">
+      <iframe src="{{ choice.youtube_embed_url }}" title="{{ choice.text|default:'Video pilihan jawaban' }}" class="h-full w-full" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+    </span>
+    {% if choice.text %}<span class="block text-sm text-zinc-700">{{ choice.text }}</span>{% endif %}
+    <a class="block text-xs font-bold text-rose-700" href="{{ choice.media_source_url }}" target="_blank" rel="noopener">Buka di YouTube</a>
+  </span>
+{% elif choice.answer_type == "video" and choice.media_source_url %}
+  <span class="block space-y-2">
+    <video controls class="max-h-80 w-full rounded-md border border-zinc-200 bg-black" src="{{ choice.media_source_url }}"></video>
+    {% if choice.text %}<span class="block text-sm text-zinc-700">{{ choice.text }}</span>{% endif %}
+    <a class="block text-xs font-bold text-rose-700" href="{{ choice.media_source_url }}" target="_blank" rel="noopener">Buka video di tab baru</a>
+  </span>
+{% elif choice.media_source_url %}
+  <span class="block space-y-1">
+    {% if choice.text %}<span class="block text-sm text-zinc-700">{{ choice.text }}</span>{% endif %}
+    <a class="font-bold text-rose-700 underline" href="{{ choice.media_source_url }}" target="_blank" rel="noopener">Buka media</a>
+  </span>
+{% else %}
+  <span>{{ choice.text|default:"Pilihan belum memiliki konten" }}</span>
+{% endif %}
+
+
+
+
