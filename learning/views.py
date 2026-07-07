@@ -148,6 +148,10 @@ def verify_email(request, uidb64, token):
         if not user.is_active:
             user.is_active = True
             user.save(update_fields=["is_active"])
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        if not profile.email_verified_at:
+            profile.email_verified_at = timezone.now()
+            profile.save(update_fields=["email_verified_at"])
         UserAccess.objects.get_or_create(user=user)
         messages.success(request, "Email berhasil diverifikasi. Silakan login untuk mulai belajar.")
         return redirect("login")
@@ -734,9 +738,36 @@ def admin_question_delete(request, uuid):
 
 @admin_required
 def admin_user_list(request):
-    users = User.objects.filter(is_staff=False).select_related("access").order_by("username")
+    users = User.objects.filter(is_staff=False).select_related("access", "profile").order_by("username")
     return render(request, "learning/admin/user_list.html", {"users": users})
 
+
+@admin_required
+def admin_user_action(request, user_id):
+    target_user = get_object_or_404(User, pk=user_id, is_staff=False)
+    if request.method != "POST":
+        return redirect("admin_user_list")
+    action = request.POST.get("action")
+    profile, _ = UserProfile.objects.get_or_create(user=target_user)
+    if action == "verify":
+        if not profile.email_verified_at:
+            profile.email_verified_at = timezone.now()
+            profile.save(update_fields=["email_verified_at"])
+        target_user.is_active = True
+        target_user.save(update_fields=["is_active"])
+        UserAccess.objects.get_or_create(user=target_user)
+        messages.success(request, f"User {target_user.username} berhasil diverifikasi dan diaktifkan.")
+    elif action == "deactivate" and profile.email_verified_at:
+        target_user.is_active = False
+        target_user.save(update_fields=["is_active"])
+        messages.success(request, f"User {target_user.username} berhasil dinonaktifkan.")
+    elif action == "activate" and profile.email_verified_at:
+        target_user.is_active = True
+        target_user.save(update_fields=["is_active"])
+        messages.success(request, f"User {target_user.username} berhasil diaktifkan.")
+    else:
+        messages.error(request, "Aksi user tidak valid.")
+    return redirect("admin_user_list")
 
 @admin_required
 def admin_attempt_list(request):
@@ -858,6 +889,9 @@ def admin_ubt_registration_detail(request, uuid):
             messages.success(request, "Status pendaftaran UBT berhasil diperbarui.")
         return redirect("admin_ubt_registration_detail", uuid=registration.uuid)
     return render(request, "learning/admin/ubt_registration_detail.html", {"registration": registration, "form": form})
+
+
+
 
 
 

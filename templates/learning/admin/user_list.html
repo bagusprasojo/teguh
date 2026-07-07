@@ -1,3 +1,74 @@
-{% extends "learning/admin/base_admin.html" %}
-{% block admin_content %}<div class="table-card"><table><thead><tr><th>User</th><th>Email</th><th>Akses</th></tr></thead><tbody>{% for item in users %}<tr><td>{{ item.username }}</td><td>{{ item.email }}</td><td>{% if item.access.is_active %}{{ item.access.expires_at|date:"d M Y H:i" }}{% else %}Tidak aktif{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% endblock %}
-
+﻿{% extends "learning/admin/base_admin.html" %}
+{% block admin_content %}
+<div class="table-card">
+  <table>
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Email</th>
+        <th>Akses Terakhir</th>
+        <th>Status Verifikasi</th>
+        <th>Status Akun</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in users %}
+      <tr>
+        <td>
+          <div class="font-black">{{ item.username }}</div>
+          {% if item.get_full_name %}<div class="text-xs text-zinc-500">{{ item.get_full_name }}</div>{% endif %}
+        </td>
+        <td>{{ item.email|default:"-" }}</td>
+        <td>
+          {% if item.access.expires_at %}
+            <div>{{ item.access.expires_at|date:"d M Y H:i" }}</div>
+            <div class="text-xs font-bold {% if item.access.is_active %}text-emerald-700{% else %}text-zinc-500{% endif %}">{% if item.access.is_active %}Masih aktif{% else %}Sudah berakhir{% endif %}</div>
+          {% else %}
+            <span class="text-zinc-500">Belum ada</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if item.profile.email_verified_at %}
+            <span class="rounded bg-emerald-50 px-2 py-1 text-xs font-black text-emerald-700">Terverifikasi</span>
+            <div class="mt-1 text-xs text-zinc-500">{{ item.profile.email_verified_at|date:"d M Y H:i" }}</div>
+          {% else %}
+            <span class="rounded bg-amber-50 px-2 py-1 text-xs font-black text-amber-700">Belum verifikasi</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if item.is_active %}
+            <span class="rounded bg-emerald-50 px-2 py-1 text-xs font-black text-emerald-700">Aktif</span>
+          {% else %}
+            <span class="rounded bg-red-50 px-2 py-1 text-xs font-black text-red-700">Nonaktif</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if not item.profile.email_verified_at %}
+            <form method="post" action="{% url 'admin_user_action' item.id %}" onsubmit="return confirm('Verifikasi dan aktifkan user ini?')">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="verify">
+              <button class="btn-primary" type="submit">Verifikasi</button>
+            </form>
+          {% elif item.is_active %}
+            <form method="post" action="{% url 'admin_user_action' item.id %}" onsubmit="return confirm('Nonaktifkan akun user ini?')">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="deactivate">
+              <button class="btn-muted" type="submit">Nonaktifkan</button>
+            </form>
+          {% else %}
+            <form method="post" action="{% url 'admin_user_action' item.id %}" onsubmit="return confirm('Aktifkan akun user ini?')">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="activate">
+              <button class="btn-primary" type="submit">Aktifkan</button>
+            </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6">Belum ada user.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

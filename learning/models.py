@@ -440,6 +440,7 @@ class UserProfile(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile")
     photo = models.ImageField(upload_to="user-photos/", blank=True)
+    email_verified_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.username} profile"
@@ -669,6 +670,7 @@ class UBTRegistration(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.package.name}"
+
 
 
 

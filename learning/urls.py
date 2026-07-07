@@ -52,6 +52,7 @@ urlpatterns = [
     path("manage/questions/<uuid:uuid>/edit/", views.admin_question_form, name="admin_question_edit"),
     path("manage/questions/<uuid:uuid>/delete/", views.admin_question_delete, name="admin_question_delete"),
     path("manage/users/", views.admin_user_list, name="admin_user_list"),
+    path("manage/users/<int:user_id>/action/", views.admin_user_action, name="admin_user_action"),
     path("manage/attempts/", views.admin_attempt_list, name="admin_attempt_list"),
     path("manage/ubt/packages/", views.admin_ubt_package_list, name="admin_ubt_package_list"),
     path("manage/ubt/packages/new/", views.admin_ubt_package_form, name="admin_ubt_package_new"),
@@ -67,6 +68,7 @@ urlpatterns = [
     path("manage/ubt/registrations/", views.admin_ubt_registration_list, name="admin_ubt_registration_list"),
     path("manage/ubt/registrations/<uuid:uuid>/", views.admin_ubt_registration_detail, name="admin_ubt_registration_detail"),
 ]
+
 
 
 
