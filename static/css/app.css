@@ -28,3 +28,6 @@ header{background:color-mix(in srgb,var(--app-surface) 92%,transparent)!importan
 
 .blog-content{line-height:1.75}.blog-content h2{margin-top:1.5rem;font-size:1.75rem;font-weight:900}.blog-content h3{margin-top:1.25rem;font-size:1.35rem;font-weight:900}.blog-content p{margin-top:1rem}.blog-content ul,.blog-content ol{margin-top:1rem;padding-left:1.5rem}.blog-content ul{list-style:disc}.blog-content ol{list-style:decimal}.blog-content a{font-weight:800;color:var(--app-primary)}.blog-content blockquote{margin-top:1rem;border-left:4px solid var(--app-primary);padding-left:1rem;color:var(--app-muted)}.blog-content img{max-width:100%;border-radius:.5rem}.ck-editor__editable{min-height:24rem}
 
+
+.topbar-accent{border-bottom:1px solid color-mix(in srgb,var(--app-primary) 25%,white);background:var(--app-primary);color:white}.topbar-accent .topbar-accent-link{color:white!important}.topbar-accent .topbar-accent-link:hover{color:color-mix(in srgb,white 82%,var(--app-primary))!important}
+
