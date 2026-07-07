@@ -6,6 +6,8 @@ from . import views
 urlpatterns = [
     path("", views.home, name="home"),
     path("register/", views.register, name="register"),
+    path("email-verification-sent/", views.email_verification_sent, name="email_verification_sent"),
+    path("verify-email/<uidb64>/<token>/", views.verify_email, name="verify_email"),
     path("login/", views.UserLoginView.as_view(), name="login"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("blog/", views.blog_list, name="blog_list"),
@@ -63,6 +65,8 @@ urlpatterns = [
     path("manage/ubt/registrations/", views.admin_ubt_registration_list, name="admin_ubt_registration_list"),
     path("manage/ubt/registrations/<uuid:uuid>/", views.admin_ubt_registration_detail, name="admin_ubt_registration_detail"),
 ]
+
+
 
 
 

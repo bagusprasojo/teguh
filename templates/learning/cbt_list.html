@@ -1,6 +1,17 @@
 {% extends "base.html" %}
 {% block title %}CBT - Koready{% endblock %}
 {% block content %}
-<section class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"><h1 class="text-3xl font-black">CBT Bahasa Korea</h1><div class="mt-6 grid gap-5 md:grid-cols-2">{% for cbt in cbts %}<div class="card p-5"><h2 class="text-xl font-black">{{ cbt.title }}</h2><p class="mt-2 text-sm text-zinc-600">{{ cbt.description }}</p><p class="mt-3 text-sm font-semibold">{{ cbt.questions.count }} soal · KKM {{ cbt.passing_score }}</p><a class="btn-primary mt-5 inline-flex" href="{% url 'cbt_take' cbt.uuid %}">Kerjakan</a></div>{% empty %}<p>Belum ada CBT.</p>{% endfor %}</div></section>
+<section class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <h1 class="text-3xl font-black">CBT Bahasa Korea</h1>
+    <div class="mt-6 grid gap-5 md:grid-cols-2">{% for cbt in cbts %}
+        <div class="card p-5">
+            <h2 class="text-xl font-black">{{ cbt.title }}</h2>
+            <p class="mt-1 text-sm text-zinc-600">{{ cbt.description }}</p>
+            <p class="mt-2 text-sm font-semibold">{{ cbt.questions.count }} soal · KKM {{ cbt.passing_score }}</p>
+            <a class="btn-primary mt-3 inline-flex" href="{% url 'cbt_take' cbt.uuid %}">Kerjakan</a>
+        </div>{% empty %}
+        <p>Belum ada CBT.</p>{% endfor %}
+    </div>
+</section>
 {% endblock %}
 

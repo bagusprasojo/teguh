@@ -21,6 +21,15 @@ class EmailOrUsernameAuthenticationForm(AuthenticationForm):
             raise forms.ValidationError("Email ini dipakai oleh lebih dari satu akun. Silakan login menggunakan username.")
         return identifier
 
+    def confirm_login_allowed(self, user):
+        if not user.is_active:
+            raise forms.ValidationError(
+                "Akun belum aktif. Silakan cek email untuk verifikasi akun.",
+                code="inactive",
+            )
+        super().confirm_login_allowed(user)
+
+
 class BlogCategoryForm(forms.ModelForm):
     class Meta:
         model = BlogCategory
@@ -344,6 +353,9 @@ class UBTImportForm(forms.Form):
         if not uploaded.name.lower().endswith(".xlsx"):
             raise forms.ValidationError("File harus berformat .xlsx.")
         return uploaded
+
+
+
 
 
 

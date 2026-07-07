@@ -1,0 +1,12 @@
+﻿{% extends "base.html" %}
+{% block title %}Verifikasi Email - Koready{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-xl px-4 py-16">
+  <div class="form-card">
+    <h1 class="text-3xl font-black">Cek Email Kamu</h1>
+    <p class="mt-4 text-slate-600">Kami sudah mengirim link verifikasi ke email pendaftaran kamu. Klik link tersebut untuk mengaktifkan akun Koready.</p>
+    <p class="mt-3 text-sm text-slate-500">Jika tidak ada di inbox, cek folder spam/promosi. Setelah email terverifikasi, kamu bisa login dan mulai menggunakan akun.</p>
+    <a href="{% url 'login' %}" class="btn-primary mt-6 inline-flex">Ke halaman login</a>
+  </div>
+</div>
+{% endblock %}

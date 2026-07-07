@@ -1,5 +1,10 @@
 ﻿from django.conf import settings
+from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 
 
 def format_rupiah(value):
@@ -42,3 +47,19 @@ Terima kasih,
 Koready
 """
     send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [registration.email], fail_silently=True)
+
+
+def send_account_verification_email(request, user):
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
+    verification_url = request.build_absolute_uri(
+        reverse("verify_email", kwargs={"uidb64": uid, "token": token})
+    )
+    context = {
+        "user": user,
+        "verification_url": verification_url,
+        "brand_name": "Koready",
+    }
+    subject = "Verifikasi email akun Koready"
+    message = render_to_string("registration/verification_email.txt", context)
+    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)

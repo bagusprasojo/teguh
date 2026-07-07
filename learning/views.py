@@ -1,11 +1,12 @@
-﻿import base64
+﻿import logging
+import base64
 import os
 import secrets
 from io import BytesIO
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import login
+from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView
@@ -16,14 +17,17 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
 
 from .importers import build_cbt_import_template_xlsx, build_ubt_import_template_xlsx, import_cbt_from_excel, import_ubt_from_excel
 from .forms import BlogCategoryForm, BlogPostForm, CBTForm, CBTImportForm, EmailOrUsernameAuthenticationForm, QuestionForm, RegisterForm, UBTForm, UBTImportForm, UBTPackageForm, UBTQuestionForm, UBTRegistrationForm, UBTRegistrationStatusForm, UserPhotoForm, UserPreferenceForm, UserProfileForm, VideoForm, VoucherForm, VoucherRedeemForm
-from .emails import send_ubt_payment_email, send_ubt_voucher_email
+from .emails import send_account_verification_email, send_ubt_payment_email, send_ubt_voucher_email
 from .models import BlogCategory, BlogPost, BlogPostRead, CBT, CBTAttempt, CBTAttemptAnswer, Choice, Question, UBT, UBTAttempt, UBTAttemptAnswer, UBTChoice, UBTPackage, UBTQuestion, UBTRegistration, LandingPageVisit, UserAccess, UserUBTAccess, UserPreference, UserProfile, Video, Voucher
 
 
 BRAND_NAME = "Koready"
+logger = logging.getLogger(__name__)
 
 def build_certificate_number(attempt):
     return f"KRD-UBT-{attempt.uuid}"
@@ -129,6 +133,29 @@ def blog_detail(request, slug):
     latest_posts = published_blog_posts().exclude(pk=post.pk)[:3]
     return render(request, "learning/blog/detail.html", {"post": post, "latest_posts": latest_posts})
 
+def email_verification_sent(request):
+    return render(request, "registration/email_verification_sent.html", {"brand_name": BRAND_NAME})
+
+
+def verify_email(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is not None and default_token_generator.check_token(user, token):
+        if not user.is_active:
+            user.is_active = True
+            user.save(update_fields=["is_active"])
+        UserAccess.objects.get_or_create(user=user)
+        messages.success(request, "Email berhasil diverifikasi. Silakan login untuk mulai belajar.")
+        return redirect("login")
+
+    messages.error(request, "Link verifikasi email tidak valid atau sudah kedaluwarsa.")
+    return redirect("login")
+
+
 def register(request):
     if request.user.is_authenticated:
         return redirect("dashboard")
@@ -136,13 +163,18 @@ def register(request):
     if request.method == "POST" and form.is_valid():
         user = form.save(commit=False)
         user.email = form.cleaned_data["email"]
+        user.is_active = False
         user.save()
-        UserAccess.objects.create(user=user)
-        login(request, user)
-        if not user.is_staff:
-            request.session["show_access_notice"] = True
-        messages.success(request, "Akun berhasil dibuat. Masukkan voucher untuk membuka akses belajar.")
-        return redirect("dashboard")
+        try:
+            send_account_verification_email(request, user)
+        except Exception:
+            logger.exception("Gagal mengirim email verifikasi untuk user_id=%s", user.pk)
+            user.delete()
+            messages.error(request, "Email verifikasi belum bisa dikirim. Periksa konfigurasi email, lalu coba daftar lagi.")
+            return redirect("register")
+        request.session["verification_email"] = user.email
+        messages.success(request, "Akun berhasil dibuat. Silakan cek email untuk verifikasi akun.")
+        return redirect("email_verification_sent")
     return render(request, "registration/register.html", {"form": form, "brand_name": BRAND_NAME})
 
 
@@ -732,6 +764,11 @@ def admin_ubt_registration_detail(request, uuid):
             messages.success(request, "Status pendaftaran UBT berhasil diperbarui.")
         return redirect("admin_ubt_registration_detail", uuid=registration.uuid)
     return render(request, "learning/admin/ubt_registration_detail.html", {"registration": registration, "form": form})
+
+
+
+
+
 
 
 
