@@ -68,6 +68,13 @@
       </div>
     </nav>
   </header>
+  {% if user.is_authenticated and not user.is_staff %}
+    <div class="border-b border-amber-200 bg-amber-50">
+      <div class="mx-auto max-w-7xl px-4 py-3 text-sm font-medium text-amber-950 sm:px-6 lg:px-8">
+        Akun Ini Hanya Boleh Digunakan Oleh <strong>SATU ORANG</strong> Saja Bernama {{ user.get_full_name|default:user.username }} Dengan Email {{ user.email }}. <strong>HARAM DIPAKAI ORANG LAIN MAUPUN KELUARGA DENGAN ALASAN APAPUN.</strong>
+      </div>
+    </div>
+  {% endif %}
   {% if messages %}
     <div class="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
       {% for message in messages %}<div class="mb-2 rounded-md border border-zinc-200 bg-white px-4 py-3 text-sm shadow-sm message-box">{{ message }}</div>{% endfor %}
@@ -77,6 +84,8 @@
   <a href="https://wa.me/6282247964226?text=Halo%20Koready%2C%20saya%20ingin%20bertanya%20tentang%20belajar%20Bahasa%20Korea" target="_blank" rel="noopener" class="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-2xl font-black text-white shadow-xl shadow-emerald-900/20" aria-label="WhatsApp">WA</a>
 </body>
 </html>
+
+
 
 
 
