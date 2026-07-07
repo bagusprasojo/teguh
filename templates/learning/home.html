@@ -4,11 +4,11 @@
 <section class="relative overflow-hidden bg-zinc-950 text-white">
   <div class="absolute inset-0 opacity-35" style="background-image:url('https://images.unsplash.com/photo-1538485399081-7191377e8241?auto=format&fit=crop&w=1600&q=80');background-size:cover;background-position:center;"></div>
   <div class="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/80 to-rose-950/40"></div>
-  <div class="relative mx-auto grid min-h-[82vh] max-w-7xl items-center px-4 py-20 sm:px-6 lg:px-8">
+  <div class="relative mx-auto grid min-h-[82vh] max-w-7xl items-center gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.75fr)] lg:px-8">
     <div class="max-w-2xl">
       <p class="mb-4 text-sm font-bold uppercase tracking-[0.25em] text-rose-200">한국어를 배우자</p>
       <h1 class="text-5xl font-black leading-tight sm:text-6xl">Koready</h1>
-      <p class="mt-5 text-xl leading-8 text-zinc-100">Platform belajar Bahasa Korea yang ringkas: video mandiri, latihan CBT, dan akses fleksibel dengan voucher.</p>
+      <p class="mt-5 text-xl leading-8 text-zinc-100">Platform Bahasa Korea mudah dan ringkas. Beli vouchernya simak video pembelajaran. Kerjakan soal-soal latihan, dan akses fleksibel dengan voucher. Dimana saja kapan saja.</p>
       <div class="mt-8 flex flex-wrap gap-3">
         <a href="{% url 'register' %}" class="btn-primary px-6 py-3">Mulai Belajar</a>
         <a href="{% url 'login' %}" class="rounded-md border border-white/30 px-6 py-3 font-bold text-white hover:bg-white/10">Login</a>
@@ -19,6 +19,17 @@
         <div class="landing-stat"><strong>{{ video_count }}+</strong><span>Video</span></div>
         <div class="landing-stat"><strong>{{ cbt_count }}+</strong><span>CBT</span></div>
       </div>
+    </div>
+    <div class="w-full max-w-md justify-self-center rounded-[3rem] border-4 border-lime-500/80 bg-zinc-950/35 px-7 py-8 shadow-2xl shadow-black/30 backdrop-blur-sm sm:px-9 lg:justify-self-end">
+      <p class="text-lg font-black leading-7 text-zinc-100">Cocok Untuk Semua Jenjang Usia :</p>
+      <ul class="mt-6 list-[square] space-y-2 pl-6 text-base leading-7 text-zinc-100 marker:text-zinc-100 marker:text-sm sm:text-lg">
+        <li>Pelajar SMP - SMA</li>
+        <li>Mahasiswa</li>
+        <li>Calon TKI Korea - Calon Mahasiswa Universitas di Korea</li>
+        <li>Tersedia Soal-soal EPS TOPIK</li>
+        <li>Sample Soal Ujian TOPIK</li>
+        <li>Soal-soal Uji Kosa Kata</li>
+      </ul>
     </div>
   </div>
 </section>
@@ -44,4 +55,8 @@
 </section>
 {% endif %}
 {% endblock %}
+
+
+
+
 
