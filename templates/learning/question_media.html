@@ -1,13 +1,13 @@
 ﻿{% if question.has_media %}
 <div class="mt-4 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 p-3 preview-card">
   {% if question.media_type == "image" %}
-    <img src="{{ question.media_source_url }}" alt="Media soal" class="max-h-96 w-full rounded-md object-contain">
+    <img src="{{ question.media_source_url }}" alt="Media soal" class="mx-auto max-h-64 max-w-full rounded-md object-contain">
   {% elif question.media_type == "audio" %}
     <audio controls class="w-full" src="{{ question.media_source_url }}"></audio>
   {% elif question.media_type == "video" %}
-    <video controls class="aspect-video w-full rounded-md bg-black" src="{{ question.media_source_url }}"></video>
+    <video controls class="mx-auto aspect-video w-full max-w-xl rounded-md bg-black" src="{{ question.media_source_url }}"></video>
   {% elif question.media_type == "youtube" %}
-    <div class="aspect-video overflow-hidden rounded-md bg-black">
+    <div class="mx-auto aspect-video w-full max-w-xl overflow-hidden rounded-md bg-black">
       <iframe class="h-full w-full" src="{{ question.youtube_embed_url }}" title="Media soal" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
     </div>
   {% endif %}
@@ -20,3 +20,4 @@
   Media soal sudah diisi, tetapi tipe media belum dipilih. Edit soal dan pilih tipe media yang sesuai.
 </div>
 {% endif %}
+
