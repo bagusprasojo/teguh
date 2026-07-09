@@ -83,12 +83,22 @@ def format_indonesian_number(value):
     return f"{value:,}".replace(",", ".")
 
 
+
+def get_client_ip(request):
+    forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR")
+
 def home(request):
     if not request.session.session_key:
         request.session.create()
     session_key = request.session.session_key
     if not request.session.get("landing_visit_counted"):
-        LandingPageVisit.objects.get_or_create(session_key=session_key)
+        LandingPageVisit.objects.get_or_create(
+            session_key=session_key,
+            defaults={"ip_address": get_client_ip(request)},
+        )
         request.session["landing_visit_counted"] = True
     visitor_count = LandingPageVisit.objects.count()
     return render(request, "learning/home.html", {

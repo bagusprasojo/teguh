@@ -142,6 +142,7 @@ class BlogPostRead(models.Model):
 class LandingPageVisit(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     session_key = models.CharField(max_length=40, unique=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
