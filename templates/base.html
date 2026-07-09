@@ -14,7 +14,7 @@
   <header class="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/90 backdrop-blur" x-data="{ mobileOpen: false }">
     <div class="topbar-accent">
       <div class="mx-auto flex max-w-7xl justify-end px-4 py-1.5 text-xs font-semibold sm:px-6 lg:px-8">
-        <a href="https://wa.me/6282247964226?text=Halo%20Koready%2C%20saya%20ingin%20bertanya" target="_blank" rel="noopener" class="topbar-accent-link">CS Koready: +62 822-4796-4226</a>
+        <a href="https://wa.me/{{ admin_whatsapp_number }}?text=Halo%20Koready%2C%20saya%20ingin%20bertanya" target="_blank" rel="noopener" class="topbar-accent-link">CS Koready: {{ admin_whatsapp_display }}</a>
       </div>
     </div>
     <nav class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
@@ -152,7 +152,7 @@
     </div>
   {% endif %}
   <main>{% block content %}{% endblock %}</main>
-  <a href="https://wa.me/6282247964226?text=Halo%20Koready%2C%20saya%20ingin%20bertanya%20tentang%20belajar%20Bahasa%20Korea" target="_blank" rel="noopener" class="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-2xl font-black text-white shadow-xl shadow-emerald-900/20" aria-label="WhatsApp">WA</a>
+  <a href="https://wa.me/{{ admin_whatsapp_number }}?text=Halo%20Koready%2C%20saya%20ingin%20bertanya%20tentang%20belajar%20Bahasa%20Korea" target="_blank" rel="noopener" class="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-2xl font-black text-white shadow-xl shadow-emerald-900/20" aria-label="WhatsApp">WA</a>
 </body>
 </html>
 
